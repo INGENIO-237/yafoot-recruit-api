@@ -1,6 +1,6 @@
 import { Express, Request, Response } from "express";
 import { HTTP } from "./utils/constants/common";
-import { CandidatesRouter } from "./routes";
+import { CandidatesRouter, WaitlistRouter } from "./routes";
 
 export default function router(server: Express) {
   server.get("/healthcheck", (req: Request, res: Response) => {
@@ -8,4 +8,5 @@ export default function router(server: Express) {
   });
 
   server.use("/api/candidates", CandidatesRouter);
+  server.use("/api/waitlist", WaitlistRouter);
 }

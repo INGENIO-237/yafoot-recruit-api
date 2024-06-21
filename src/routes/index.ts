@@ -1,3 +1,4 @@
 import CandidatesRouter from "./candidates.routes";
+import WaitlistRouter from "./waitlist.routes";
 
-export { CandidatesRouter };
+export { CandidatesRouter, WaitlistRouter };

@@ -39,5 +39,7 @@ export default class CandidateService {
     if (raiseException && !candidate) {
       throw new ApiError("Candidate not found", HTTP.NOT_FOUND);
     }
+
+    return candidate
   }
 }
