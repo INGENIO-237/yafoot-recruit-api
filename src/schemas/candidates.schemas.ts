@@ -1,6 +1,7 @@
 import { nativeEnum, object, optional, string, z } from "zod";
 import { CITIES, POSITIONS } from "../utils/constants/candidates";
 import { Types } from "mongoose";
+import { isValidNumber } from "libphonenumber-js";
 
 export const registerCandidateSchema = object({
   body: object({
@@ -19,6 +20,16 @@ export const registerCandidateSchema = object({
       required_error: "Position is required",
       invalid_type_error: "Invalid position",
     }),
+    phone: string({
+      required_error: "Phone Number is required",
+      invalid_type_error: "Invalid phone number",
+    }),
+  }).superRefine((data, ctx) => {
+    if (!isValidNumber(data.phone))
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid phone number format",
+      });
   }),
 });
 

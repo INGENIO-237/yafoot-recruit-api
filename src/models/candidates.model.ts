@@ -4,10 +4,7 @@ import { generatePublicId } from "../utils/utilities";
 
 const candidateSchema = new Schema(
   {
-    publicId: {
-      type: String,
-      required: true,
-    },
+    publicId: String,
     fistname: String,
     lastname: {
       type: String,
@@ -20,6 +17,10 @@ const candidateSchema = new Schema(
     position: {
       type: String,
       enum: [POSITIONS],
+    },
+    phone: {
+      type: String,
+      required: true,
     },
   },
   {

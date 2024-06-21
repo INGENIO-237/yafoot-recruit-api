@@ -18,3 +18,11 @@ export function logError(error: BaseError) {
   logger.error(error.message);
   logger.error("=========~END=========");
 }
+
+export function parseValidationErrors(validationError: any) {
+  return [
+    ...validationError.errors.map((error: any) => {
+      return { message: error.message };
+    }),
+  ];
+}

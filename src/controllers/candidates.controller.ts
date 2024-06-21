@@ -5,7 +5,7 @@ import { HTTP } from "../utils/constants/common";
 import { GetCandidate, RegisterCandidate } from "../schemas/candidates.schemas";
 
 @Service()
-export default class CandidateController {
+export default class CandidatesController {
   constructor(private service: CandidateService) {}
 
   async registerCandidate(
