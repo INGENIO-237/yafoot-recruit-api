@@ -1,12 +1,12 @@
 import { Service } from "typedi";
-import CandidateService from "../services/candidates.services";
+import CandidatesServices from "../services/candidates.services";
 import { Request, Response } from "express";
 import { HTTP } from "../utils/constants/common";
 import { GetCandidate, RegisterCandidate } from "../schemas/candidates.schemas";
 
 @Service()
 export default class CandidatesController {
-  constructor(private service: CandidateService) {}
+  constructor(private service: CandidatesServices) {}
 
   async getCandidates(req: Request, res: Response) {
     const candidates = await this.service.getCandidates();

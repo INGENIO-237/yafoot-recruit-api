@@ -1,3 +1,7 @@
 export enum CANDIDATES {
-    REGISTERED = "REGISTERED"
+  REGISTERED = "REGISTERED",
+}
+
+export enum SESSIONS {
+  CREATED = "CREATED",
 }

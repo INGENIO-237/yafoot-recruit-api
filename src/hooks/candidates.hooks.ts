@@ -4,11 +4,11 @@ import EventEmitter from "node:events";
 import { CANDIDATES } from "../utils/constants/hooks";
 import { ICandidate } from "../models/candidates.model";
 import Container from "typedi";
-import SmsService from "../services/sms.services";
+import SmsServices from "../services/sms.services";
 import logger from "../utils/logger";
 
 const CandidatesEvents = new EventEmitter();
-const sms = Container.get(SmsService);
+const sms = Container.get(SmsServices);
 
 CandidatesEvents.on(
   CANDIDATES.REGISTERED,

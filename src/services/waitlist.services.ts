@@ -1,13 +1,13 @@
 import { Service } from "typedi";
 import WaitlistRepo from "../repositories/waitlist.repository";
 import { RegisterToWaitlist } from "../schemas/waitlist.schemas";
-import CandidateService from "./candidates.services";
+import CandidatesServices from "./candidates.services";
 
 @Service()
 export default class WaitlistServices {
   constructor(
     private repository: WaitlistRepo,
-    private candidateService: CandidateService
+    private CandidatesServices: CandidatesServices
   ) {}
 
   async getWaitlist() {
@@ -15,7 +15,7 @@ export default class WaitlistServices {
   }
 
   async registerToWaitlist({ publicId }: RegisterToWaitlist["body"]) {
-    const candidate = await this.candidateService.getCandidate({
+    const candidate = await this.CandidatesServices.getCandidate({
       publicId: "YA-" + publicId,
     });
 

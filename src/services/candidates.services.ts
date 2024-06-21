@@ -7,7 +7,7 @@ import CandidatesEvents from "../hooks/candidates.hooks";
 import { CANDIDATES } from "../utils/constants/hooks";
 
 @Service()
-export default class CandidateService {
+export default class CandidatesServices {
   constructor(private repository: CandidatesRepo) {}
 
   async getCandidates() {
