@@ -8,6 +8,12 @@ import { GetCandidate, RegisterCandidate } from "../schemas/candidates.schemas";
 export default class CandidatesController {
   constructor(private service: CandidateService) {}
 
+  async getCandidates(req: Request, res: Response) {
+    const candidates = await this.service.getCandidates();
+
+    return res.status(HTTP.OK).json(candidates);
+  }
+
   async registerCandidate(
     req: Request<{}, {}, RegisterCandidate["body"]>,
     res: Response

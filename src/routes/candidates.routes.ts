@@ -1,4 +1,4 @@
-import "reflect-metadata"
+import "reflect-metadata";
 
 import { Router } from "express";
 import validate from "../middlewares/validate-requests";
@@ -12,6 +12,8 @@ import CandidatesController from "../controllers/candidates.controller";
 const CandidatesRouter = Router();
 
 const controller = Container.get(CandidatesController);
+
+CandidatesRouter.get("", controller.getCandidates.bind(controller));
 
 CandidatesRouter.post(
   "",

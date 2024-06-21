@@ -4,7 +4,11 @@ import { Types } from "mongoose";
 import { RegisterCandidate } from "../schemas/candidates.schemas";
 
 @Service()
-export default class CandidateRepo {
+export default class CandidatesRepo {
+  async getCandidates() {
+    return await Candidate.find();
+  }
+
   async registerCandidate(payload: RegisterCandidate["body"]) {
     return await Candidate.create(payload);
   }

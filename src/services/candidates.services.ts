@@ -1,5 +1,5 @@
 import { Service } from "typedi";
-import CandidateRepo from "../repositories/candidates.repository";
+import CandidatesRepo from "../repositories/candidates.repository";
 import ApiError from "../utils/errors/errors.base";
 import { HTTP } from "../utils/constants/common";
 import { RegisterCandidate } from "../schemas/candidates.schemas";
@@ -8,7 +8,11 @@ import { CANDIDATES } from "../utils/constants/hooks";
 
 @Service()
 export default class CandidateService {
-  constructor(private repository: CandidateRepo) {}
+  constructor(private repository: CandidatesRepo) {}
+
+  async getCandidates() {
+    return await this.repository.getCandidates();
+  }
 
   async registerCandidate(payload: RegisterCandidate["body"]) {
     const candidate = await this.repository.registerCandidate(payload);
