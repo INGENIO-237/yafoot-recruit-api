@@ -1,5 +1,6 @@
 import { InferSchemaType, Schema, model } from "mongoose";
 import { CITIES, POSITIONS } from "../utils/constants/candidates";
+import { generatePublicId } from "../utils/utilities";
 
 const candidateSchema = new Schema(
   {
@@ -30,7 +31,7 @@ candidateSchema.pre("save", function (next) {
   const candidate = this;
 
   if (candidate.isNew) {
-    // TODO: Generate PUBLIC ID here
+    candidate.publicId = generatePublicId();
   }
 
   next();
