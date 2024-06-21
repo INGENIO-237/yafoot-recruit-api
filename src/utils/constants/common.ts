@@ -13,3 +13,5 @@ export enum HTTP {
   NOT_FOUND = 404,
   SERVER_ERROR = 500,
 }
+
+export const ALPHABETS = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
