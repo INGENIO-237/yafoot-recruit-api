@@ -5,7 +5,7 @@ import { generatePublicId } from "../utils/utilities";
 const candidateSchema = new Schema(
   {
     publicId: String,
-    fistname: String,
+    firstname: String,
     lastname: {
       type: String,
       required: true,
