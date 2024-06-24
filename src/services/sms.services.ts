@@ -21,6 +21,7 @@ export default class SmsServices {
       recipient: phone,
     });
   }
+
   async sendNewSessionCreatedSms({
     firstname,
     lastname,

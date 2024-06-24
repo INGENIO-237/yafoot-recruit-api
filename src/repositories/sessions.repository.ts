@@ -11,4 +11,8 @@ export default class SessionsRepo {
   async getSessions() {
     return await Session.find();
   }
+
+  async getSession(sessionId: string) {
+    return await Session.findById(sessionId);
+  }
 }
