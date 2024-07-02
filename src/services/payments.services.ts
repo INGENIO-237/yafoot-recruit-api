@@ -1,10 +1,10 @@
 import { Service } from "typedi";
 import { ICandidate } from "../models/candidates.model";
-import { PROVIDER } from "../utils/constants/payments";
 import CandidatesServices from "./candidates.services";
-import IntouchServices from "./mobile/intouch.services";
 import SessionsServices from "./sessions.services";
 import PaymentRepo from "../repositories/payments.repository";
+import { CreatePayment } from "../schemas/payments.schemas";
+import { IntouchServices } from "./mobile";
 
 @Service()
 export default class PaymentsService {
@@ -20,17 +20,15 @@ export default class PaymentsService {
     publicId,
     session,
     provider,
+    phone
   }: {
     amount: number;
-    publicId: string;
-    session: string;
-    provider: PROVIDER;
-  }) {
+  } & CreatePayment["body"]) {
     // Ensure both candidate and session do exist and are valid
     await this.sessionService.getSession({ sessionId: session });
     const candidate = await this.candidateService.getCandidate({ publicId });
 
-    const { firstname, lastname, phone } = candidate as ICandidate;
+    const { firstname, lastname } = candidate as ICandidate;
 
     // Initialize payment
     const { reference } = await this.intouch.initializePayment({
@@ -50,6 +48,6 @@ export default class PaymentsService {
       reference,
     });
 
-    return {paymentRef};
+    return { paymentRef };
   }
 }

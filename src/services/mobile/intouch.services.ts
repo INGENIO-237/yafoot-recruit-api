@@ -1,48 +1,71 @@
 import axios from "axios";
 import config from "../../config";
-import CryptoJS from "crypto-js";
+import crypto from "crypto";
 import { INTOUCH_PROVIDER, PROVIDER } from "../../utils/constants/payments";
 import { Service } from "typedi";
 
 @Service()
 export default class IntouchServices {
-  private uri = config.INTOUCH_URI;
+  private _uri = config.INTOUCH_URI;
   private _username = config.INTOUCH_USERNAME;
   private _pwd = config.INTOUCH_PWD;
   private _callback = config.INTOUCH_CALLBACK;
 
   private async getDigest() {
-    return axios.get(this.uri).catch((error) => {
-      if (
-        error.response &&
-        error.response.status === 401 &&
-        error.response.headers["www-authenticate"]
-      ) {
-        // Parse the WWW-Authenticate header
-        const authHeader = error.response.headers["www-authenticate"];
-        const authParams: any = {};
-        authHeader.replace(
-          /(\w+)="([^"]+)"/g,
-          (match: any, key: string, value: any) => {
-            authParams[key] = value;
-          }
-        );
+    try {
+      // First request to get the WWW-Authenticate header
+      await axios.post(this._uri, {}, { validateStatus: (status) => false });
+    } catch (error: any) {
+      const authHeader = error.response.headers["www-authenticate"] as string;
 
-        // Prepare the HA1, HA2, and response hash
-        const ha1 = CryptoJS.MD5(
-          `${this._username}:${authParams.realm}:${this._pwd}`
-        ).toString();
-        const ha2 = CryptoJS.MD5(`GET:${authParams.uri}`).toString();
-        const response = CryptoJS.MD5(
-          `${ha1}:${authParams.nonce}:00000001:${authParams.cnonce}:${authParams.qop}:${ha2}`
-        ).toString();
-
-        // Prepare the Authorization header
-        const authHeaderDigest = `Digest username="${this._username}", realm="${authParams.realm}", nonce="${authParams.nonce}", uri="${authParams.uri}", qop=${authParams.qop}, nc=00000001, cnonce="${authParams.cnonce}", response="${response}", opaque="${authParams.opaque}"`;
-
-        return authHeaderDigest;
+      if (!authHeader || !authHeader.startsWith("Digest")) {
+        throw new Error("Digest authentication headers not found");
       }
-    });
+
+      const authParams = authHeader
+        .match(/(\w+)="([^"]*)"/g)
+        ?.reduce((acc: any, item: string) => {
+          const [key, value] = item.split("=");
+          acc[key.trim()] = value.replace(/"/g, "").trim();
+          return acc;
+        }, {});
+
+      if (!authParams) {
+        throw new Error("Failed to parse WWW-Authenticate header");
+      }
+
+      console.log({ authParams });
+
+      const { realm, nonce, opaque } = authParams;
+
+      const ha1 = crypto
+        .createHash("md5")
+        .update(`${this._username}:${realm}:${this._pwd}`)
+        .digest("hex");
+      const ha2 = crypto
+        .createHash("md5")
+        .update(`PUT:${this._uri}`)
+        .digest("hex");
+      const response = crypto
+        .createHash("md5")
+        .update(`${ha1}:${nonce}:${ha2}`)
+        .digest("hex");
+
+      const authDigestHeader = `Digest username="${this._username}", realm="${realm}", nonce="${nonce}", uri="${this._uri}", response="${response}", opaque="${opaque}"`;
+
+      // Second request with the Digest authentication header
+      // const secondResponse = await axios.put(this._uri, data, {
+      //   headers: {
+      //     Authorization: authDigestHeader,
+      //     "Content-Type": "application/json",
+      //     "Content-Length": Buffer.byteLength(JSON.stringify(data)),
+      //   },
+      //   httpsAgent: new (require("https").Agent)({ rejectUnauthorized: false }), // Disable SSL verification
+      //   timeout: 30000,
+      // });
+
+      return authDigestHeader;
+    }
   }
 
   async initializePayment({
@@ -58,30 +81,38 @@ export default class IntouchServices {
   }) {
     const digest = (await this.getDigest()) as string;
 
+    if (!digest) {
+      throw new Error("Error generating digest");
+    }
+
+    console.log({ digest });
+
+    const payload = {
+      idFromClient: Date.now(),
+      amount,
+      additionnalInfos: {
+        recipientEmail: "",
+        recipientFirstName: firstname,
+        recipientLastName: lastname,
+      },
+      callback: this._callback,
+      recipientNumber: phone,
+      serviceCode:
+        provider === PROVIDER.OM ? INTOUCH_PROVIDER.OM : INTOUCH_PROVIDER.MOMO,
+    };
+
     return axios
-      .post(
-        this.uri,
-        {
-          idFromClient: Date.now(),
-          amount,
-          additionnalInfos: {
-            recipientEmail: "",
-            recipientFirstName: firstname,
-            recipientLastName: lastname,
-          },
-          callback: this._callback,
-          recipientNumber: phone,
-          serviceCode:
-            provider === PROVIDER.OM
-              ? INTOUCH_PROVIDER.OM
-              : INTOUCH_PROVIDER.MOMO,
+      .put(this._uri, payload, {
+        headers: {
+          Authorization: digest,
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(JSON.stringify(payload)),
         },
-        {
-          headers: {
-            Authorization: digest,
-          },
-        }
-      )
+        // auth: {
+        //   username: this._username,
+        //   password: this._pwd,
+        // },
+      })
       .then((response: any) => {
         const { idFromGU: reference } = response;
 

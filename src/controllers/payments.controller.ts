@@ -6,7 +6,7 @@ import config from "../config";
 import { HTTP } from "../utils/constants/common";
 
 @Service()
-export default class PaymentController {
+export default class PaymentsController {
   constructor(private service: PaymentsService) {}
 
   async initializePayment(

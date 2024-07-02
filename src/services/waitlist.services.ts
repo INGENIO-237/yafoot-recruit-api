@@ -16,7 +16,7 @@ export default class WaitlistServices {
 
   async registerToWaitlist({ publicId }: RegisterToWaitlist["body"]) {
     const candidate = await this.CandidatesServices.getCandidate({
-      publicId: "YA-" + publicId,
+      publicId,
     });
 
     return await this.repository.registerToWaitlist(

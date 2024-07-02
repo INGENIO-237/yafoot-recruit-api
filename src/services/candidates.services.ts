@@ -33,13 +33,13 @@ export default class CandidatesServices {
   }) {
     const candidate = await this.repository.getCandidate({
       candidateId,
-      publicId,
+      publicId: "YA-" + publicId,
     });
 
     if (raiseException && !candidate) {
       throw new ApiError("Candidate not found", HTTP.NOT_FOUND);
     }
 
-    return candidate
+    return candidate;
   }
 }

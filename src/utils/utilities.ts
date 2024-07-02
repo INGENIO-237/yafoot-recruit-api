@@ -24,3 +24,17 @@ export function getRandomString(length: number = 1) {
 export function generatePublicId() {
   return "YA-" + getRandomString() + generateRandomNumber() + getRandomString();
 }
+
+const now = new Date().toISOString();
+
+export function formatDate(datetime: string) {
+  if (datetime.includes("T") && datetime.endsWith("Z")) {
+    datetime = datetime.split(".")[0];
+
+    const [date, time] = datetime.split("T");
+
+    datetime = date + " " + time;
+  }
+
+  return datetime;
+}
