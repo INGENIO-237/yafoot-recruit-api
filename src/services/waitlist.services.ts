@@ -2,6 +2,8 @@ import { Service } from "typedi";
 import WaitlistRepo from "../repositories/waitlist.repository";
 import { RegisterToWaitlist } from "../schemas/waitlist.schemas";
 import CandidatesServices from "./candidates.services";
+import ApiError from "../utils/errors/errors.base";
+import { HTTP } from "../utils/constants/common";
 
 @Service()
 export default class WaitlistServices {
@@ -14,10 +16,25 @@ export default class WaitlistServices {
     return await this.repository.getWaitlist();
   }
 
+  async getCandidateWaitlist(candidateId: string) {
+    return await this.repository.getWaitlist();
+  }
+
   async registerToWaitlist({ publicId }: RegisterToWaitlist["body"]) {
     const candidate = await this.CandidatesServices.getCandidate({
       publicId,
     });
+
+    const candidateId = candidate?._id.toString() as string;
+
+    const alreadyRegistered = await this.getCandidateWaitlist(candidateId);
+
+    if (alreadyRegistered) {
+      throw new ApiError(
+        "Already registered to the waitlist",
+        HTTP.BAD_REQUEST
+      );
+    }
 
     return await this.repository.registerToWaitlist(
       candidate?._id.toString() as string
