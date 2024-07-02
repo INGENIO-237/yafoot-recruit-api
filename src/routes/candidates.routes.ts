@@ -8,23 +8,24 @@ import {
 } from "../schemas/candidates.schemas";
 import Container from "typedi";
 import CandidatesController from "../controllers/candidates.controller";
+import { tryCatch } from "../utils/errors/errors.utils";
 
 const CandidatesRouter = Router();
 
 const controller = Container.get(CandidatesController);
 
-CandidatesRouter.get("", controller.getCandidates.bind(controller));
+CandidatesRouter.get("", tryCatch(controller.getCandidates.bind(controller)));
 
 CandidatesRouter.post(
   "",
   validate(registerCandidateSchema),
-  controller.registerCandidate.bind(controller)
+  tryCatch(controller.registerCandidate.bind(controller))
 );
 
 CandidatesRouter.get(
   "/:candidateId",
   validate(getCandidateSchema),
-  controller.getCandidate.bind(controller)
+  tryCatch(controller.getCandidate.bind(controller))
 );
 
 export default CandidatesRouter;

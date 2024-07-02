@@ -5,7 +5,7 @@ import TwilioService from "./twilio.services";
 export default class SmsServices {
   constructor(private twilio: TwilioService) {}
 
-  async sendNewRegistrationSms({
+  async sendPkSms({
     firstname,
     lastname,
     phone,

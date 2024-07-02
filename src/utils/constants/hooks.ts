@@ -1,5 +1,6 @@
 export enum CANDIDATES {
   REGISTERED = "REGISTERED",
+  EXISTING_PHONE = "EXISTING_PHONE"
 }
 
 export enum SESSIONS {

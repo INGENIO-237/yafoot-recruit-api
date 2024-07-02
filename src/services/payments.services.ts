@@ -15,12 +15,13 @@ export default class PaymentsService {
     private intouch: IntouchServices
   ) {}
 
+  // TODO: Remove intouch and integrate toolbox
   async initializePayment({
     amount,
     publicId,
     session,
     provider,
-    phone
+    phone,
   }: {
     amount: number;
   } & CreatePayment["body"]) {
@@ -50,4 +51,6 @@ export default class PaymentsService {
 
     return { paymentRef };
   }
+
+  // TODO: Emit PAYMENT_COMPLETED event to automatically create candidate's card
 }

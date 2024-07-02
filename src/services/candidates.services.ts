@@ -15,6 +15,24 @@ export default class CandidatesServices {
   }
 
   async registerCandidate(payload: RegisterCandidate["body"]) {
+    /**
+     * Look for existing candidate with the same phone number
+     * If any, emit EXISTING_PHONE event, send pk ID via SMS
+     * And throw an `Already in use` error
+     */
+    const existingCandidate = await this.repository.getCandidate({
+      phone: payload.phone,
+    });
+
+    if (existingCandidate) {
+      CandidatesEvents.emit(CANDIDATES.EXISTING_PHONE, existingCandidate);
+
+      throw new ApiError(
+        "Phone number already in use. If this is yours, an SMS has been sent to you with your Public ID.",
+        HTTP.BAD_REQUEST
+      );
+    }
+
     const candidate = await this.repository.registerCandidate(payload);
 
     CandidatesEvents.emit(CANDIDATES.REGISTERED, candidate);
@@ -25,15 +43,18 @@ export default class CandidatesServices {
   async getCandidate({
     candidateId,
     publicId,
+    phone,
     raiseException = true,
   }: {
     candidateId?: string;
     publicId?: string;
+    phone?: string;
     raiseException?: boolean;
   }) {
     const candidate = await this.repository.getCandidate({
       candidateId,
       publicId: "YA-" + publicId,
+      phone,
     });
 
     if (raiseException && !candidate) {

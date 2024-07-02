@@ -14,7 +14,7 @@ CandidatesEvents.on(
   CANDIDATES.REGISTERED,
   async ({ firstname, lastname, phone, publicId }: ICandidate) => {
     try {
-      await sms.sendNewRegistrationSms({
+      await sms.sendPkSms({
         firstname: firstname as string,
         lastname,
         phone,
@@ -25,5 +25,23 @@ CandidatesEvents.on(
     }
   }
 );
+
+CandidatesEvents.on(
+  CANDIDATES.EXISTING_PHONE,
+  async ({ firstname, lastname, phone, publicId }: ICandidate) => {
+    try {
+      await sms.sendPkSms({
+        firstname: firstname as string,
+        lastname,
+        phone,
+        publicId: publicId as string,
+      });
+    } catch (error) {
+      logger.error(error);
+    }
+  }
+);
+
+
 
 export default CandidatesEvents;
