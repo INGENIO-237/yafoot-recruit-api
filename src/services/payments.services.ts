@@ -1,10 +1,9 @@
 import { Service } from "typedi";
-import { ICandidate } from "../models/candidates.model";
 import CandidatesServices from "./candidates.services";
 import SessionsServices from "./sessions.services";
 import PaymentRepo from "../repositories/payments.repository";
 import { CreatePayment } from "../schemas/payments.schemas";
-import { IntouchServices } from "./mobile";
+import { ToolBoxServices } from "./mobile";
 
 @Service()
 export default class PaymentsService {
@@ -12,10 +11,9 @@ export default class PaymentsService {
     private repository: PaymentRepo,
     private candidateService: CandidatesServices,
     private sessionService: SessionsServices,
-    private intouch: IntouchServices
+    private toolbox: ToolBoxServices
   ) {}
 
-  // TODO: Remove intouch and integrate toolbox
   async initializePayment({
     amount,
     publicId,
@@ -29,28 +27,27 @@ export default class PaymentsService {
     await this.sessionService.getSession({ sessionId: session });
     const candidate = await this.candidateService.getCandidate({ publicId });
 
-    const { firstname, lastname } = candidate as ICandidate;
-
     // Initialize payment
-    const { reference } = await this.intouch.initializePayment({
-      firstname: firstname as string | undefined,
-      lastname,
-      phone,
-      provider,
-      amount,
-    });
+    const { reference, authorization_url } =
+      await this.toolbox.initializePayment({
+        phone,
+        provider,
+        amount,
+      });
 
     // Persist initialized payment
     const { paymentRef } = await this.repository.initializePayment({
       session,
-      candidate: publicId,
+      candidate: candidate?._id.toString() as string,
       amount,
       provider,
       reference,
     });
 
-    return { paymentRef };
+    // TODO: Emit PAYMENT.INITIATED event to check constantly payment status
+
+    return { paymentRef, authorization_url };
   }
 
-  // TODO: Emit PAYMENT_COMPLETED event to automatically create candidate's card
+  // TODO: Emit PAYMENT.COMPLETED event to automatically create candidate's card
 }

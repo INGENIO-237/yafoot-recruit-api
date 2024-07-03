@@ -1,5 +1,6 @@
 import { InferSchemaType, Schema, Types, model } from "mongoose";
 import { PAYMENT_STATUS, PROVIDER } from "../utils/constants/payments";
+import config from "../config";
 
 export const paymentSchema = new Schema(
   {
@@ -15,7 +16,7 @@ export const paymentSchema = new Schema(
     },
     amount: {
       type: Number,
-      required: true,
+      default: config.APPLICATION_FEES ?? 10000,
     },
     status: {
       type: String,

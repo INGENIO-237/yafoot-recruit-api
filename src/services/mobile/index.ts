@@ -1,3 +1,3 @@
-import IntouchServices from "./intouch.services";
+import ToolBoxServices from "./toolbox.services";
 
-export { IntouchServices };
+export { ToolBoxServices };

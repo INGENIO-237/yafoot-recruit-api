@@ -13,11 +13,16 @@ export default class PaymentsController {
     req: Request<{}, {}, CreatePayment["body"]>,
     res: Response
   ) {
-    const { paymentRef } = await this.service.initializePayment({
-      amount: config.APPLICATION_FEES,
-      ...req.body,
-    });
+    const { paymentRef, authorization_url } =
+      await this.service.initializePayment({
+        amount: Number(config.APPLICATION_FEES),
+        ...req.body,
+      });
 
-    return res.status(HTTP.CREATED).json({ paymentRef });
+    return res.status(HTTP.CREATED).json({
+      paymentRef,
+      authorization_url,
+      message: "Initiated. Confirm the payment on your phone please.",
+    });
   }
 }
