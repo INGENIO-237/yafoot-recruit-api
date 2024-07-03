@@ -21,6 +21,11 @@ export default class SessionsServices {
   async getSessions() {
     return await this.repository.getSessions();
   }
+  
+  async getLatestSession() {
+    const now = new Date()
+    return await this.repository.getLatestSession(now);
+  }
 
   async getSession({
     sessionId,

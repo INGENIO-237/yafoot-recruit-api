@@ -17,4 +17,9 @@ SessionsRouter.post(
   controller.createSession.bind(controller)
 );
 
+SessionsRouter.get(
+  "/latest",
+  controller.getLatestSession.bind(controller)
+);
+
 export default SessionsRouter;

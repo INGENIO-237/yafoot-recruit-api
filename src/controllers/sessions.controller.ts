@@ -22,4 +22,10 @@ export default class SessionsController {
 
     return res.status(HTTP.OK).json(sessions);
   }
+
+  async getLatestSession(req: Request, res: Response){
+    const session = await this.service.getLatestSession();
+
+    return res.status(HTTP.OK).json(session);
+  }
 }
