@@ -46,4 +46,17 @@ export default class ToolBoxServices {
         throw error;
       });
   }
+
+  async getPayment(reference: string) {
+    return axios
+      .get(this._uri + "/payments/mobile/references/" + reference, {
+        headers: {
+          ["x-api-key"]: this._apiKey,
+        },
+      })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error;
+      });
+  }
 }

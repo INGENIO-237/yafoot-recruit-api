@@ -1,6 +1,6 @@
 import { Service } from "typedi";
 import Payment from "../models/payments.model";
-import { PROVIDER } from "../utils/constants/payments";
+import { PAYMENT_STATUS, PROVIDER } from "../utils/constants/payments";
 
 @Service()
 export default class PaymentRepo {
@@ -26,5 +26,15 @@ export default class PaymentRepo {
     });
 
     return { paymentRef };
+  }
+
+  async updatePayment({
+    reference,
+    status,
+  }: {
+    reference: string;
+    status: PAYMENT_STATUS;
+  }) {
+    await Payment.findOneAndUpdate({ reference }, { status });
   }
 }

@@ -4,6 +4,9 @@ import SessionsServices from "./sessions.services";
 import PaymentRepo from "../repositories/payments.repository";
 import { CreatePayment } from "../schemas/payments.schemas";
 import { ToolBoxServices } from "./mobile";
+import { PAYMENT_STATUS } from "../utils/constants/payments";
+import PaymentsHooks from "../hooks/payments.hooks";
+import { PAYMENTS } from "../utils/constants/hooks";
 
 @Service()
 export default class PaymentsService {
@@ -44,10 +47,19 @@ export default class PaymentsService {
       reference,
     });
 
-    // TODO: Emit PAYMENT.INITIATED event to check constantly payment status
+    // Emit PAYMENT.INITIALIZED event to constantly check payment status
+    PaymentsHooks.emit(PAYMENTS.INITIALIZED, reference);
 
     return { paymentRef, authorization_url };
   }
 
-  // TODO: Emit PAYMENT.COMPLETED event to automatically create candidate's card
+  async updatePayment({
+    reference,
+    status,
+  }: {
+    reference: string;
+    status: PAYMENT_STATUS;
+  }) {
+    await this.repository.updatePayment({ reference, status });
+  }
 }

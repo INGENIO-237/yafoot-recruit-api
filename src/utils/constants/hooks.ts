@@ -6,3 +6,10 @@ export enum CANDIDATES {
 export enum SESSIONS {
   CREATED = "CREATED",
 }
+
+
+export enum PAYMENTS {
+  INITIALIZED = "INITIALIZED",
+  SUCCEEDED = "SUCCEEDED",
+  FAILED = "FAILED",
+}
