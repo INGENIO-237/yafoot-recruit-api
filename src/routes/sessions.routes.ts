@@ -5,16 +5,22 @@ import validate from "../middlewares/validate-requests";
 import { createSessionSchema } from "../schemas/sessions.schemas";
 import Container from "typedi";
 import SessionsController from "../controllers/sessions.controller";
+import { tryCatch } from "../utils/errors/errors.utils";
 
 const SessionsRouter = Router();
 const controller = Container.get(SessionsController);
 
-SessionsRouter.get("", controller.getSessions.bind(controller));
+SessionsRouter.get("", tryCatch(controller.getSessions.bind(controller)));
 
 SessionsRouter.post(
   "",
   validate(createSessionSchema),
-  controller.createSession.bind(controller)
+  tryCatch(controller.createSession.bind(controller))
+);
+
+SessionsRouter.get(
+  "/latest",
+  tryCatch(controller.getLatestSession.bind(controller))
 );
 
 export default SessionsRouter;

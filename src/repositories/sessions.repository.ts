@@ -11,4 +11,12 @@ export default class SessionsRepo {
   async getSessions() {
     return await Session.find();
   }
+
+  async getLatestSession(date: Date) {
+    return await Session.findOne({ date: { $gt: date } }).select("-createdAt -updatedAt -__v");
+  }
+
+  async getSession(sessionId: string) {
+    return await Session.findById(sessionId);
+  }
 }

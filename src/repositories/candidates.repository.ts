@@ -16,12 +16,14 @@ export default class CandidatesRepo {
   async getCandidate({
     candidateId,
     publicId,
+    phone,
   }: {
     candidateId?: string;
     publicId?: string;
+    phone?: string;
   }) {
     return await Candidate.findOne({
-      $or: [{ _id: new Types.ObjectId(candidateId) }, { publicId }],
+      $or: [{ _id: new Types.ObjectId(candidateId) }, { publicId }, { phone }],
     });
   }
 }

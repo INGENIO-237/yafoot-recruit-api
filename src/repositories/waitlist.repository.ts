@@ -7,6 +7,10 @@ export default class WaitlistRepo {
     return await Waitlist.create({ candidate: candidateId });
   }
 
+  async getCandidateWaitlist(candidateId: string) {
+    return await Waitlist.findOne({ candidate: candidateId });
+  }
+
   async getWaitlist() {
     return await Waitlist.find();
   }

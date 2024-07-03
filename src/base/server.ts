@@ -2,6 +2,7 @@ import express from "express";
 import router from "../router";
 import connectToDb from "./db";
 import errorHandler from "../utils/errors/errors.handler";
+import cors from "cors";
 
 export default function createServer() {
   const server = express();
@@ -9,13 +10,16 @@ export default function createServer() {
   //   Connect to DB
   (async () => await connectToDb())();
 
-  //   Middlewares
+  //  Middlewares
   server.use(express.json());
 
-  //   Router
+  //  Cors
+  server.use(cors());
+
+  //  Router
   router(server);
 
-  //   Error handling
+  //  Error handling
   server.use(errorHandler);
 
   return server;

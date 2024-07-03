@@ -3,6 +3,8 @@ import SessionsRepo from "../repositories/sessions.repository";
 import { CreateSession } from "../schemas/sessions.schemas";
 import SessionsEvents from "../hooks/sessions.hooks";
 import { SESSIONS } from "../utils/constants/hooks";
+import ApiError from "../utils/errors/errors.base";
+import { HTTP } from "../utils/constants/common";
 
 @Service()
 export default class SessionsServices {
@@ -18,5 +20,26 @@ export default class SessionsServices {
 
   async getSessions() {
     return await this.repository.getSessions();
+  }
+  
+  async getLatestSession() {
+    const now = new Date()
+    return await this.repository.getLatestSession(now);
+  }
+
+  async getSession({
+    sessionId,
+    raiseException = true,
+  }: {
+    sessionId: string;
+    raiseException?: boolean;
+  }) {
+    const session = await this.repository.getSession(sessionId);
+
+    if (!session && raiseException) {
+      throw new ApiError("Session does not exist", HTTP.NOT_FOUND);
+    }
+
+    return session;
   }
 }

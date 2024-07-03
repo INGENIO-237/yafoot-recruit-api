@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { BaseError } from "./errors.base";
 import logger from "../logger";
+import { formatDate } from "../utilities";
 
 export function tryCatch(handler: Function) {
   return async function (req: Request, res: Response, next: NextFunction) {
@@ -14,7 +15,7 @@ export function tryCatch(handler: Function) {
 
 export function logError(error: BaseError) {
   const date = new Date().toISOString();
-  logger.error(`=========${date}=========`);
+  logger.error(`=========${formatDate(date)}=========`);
   logger.error(error.message);
   logger.error("=========~END=========");
 }
