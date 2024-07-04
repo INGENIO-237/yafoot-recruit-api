@@ -45,3 +45,11 @@ export const createPaymentSchema = object({
 });
 
 export type CreatePayment = z.infer<typeof createPaymentSchema>;
+
+export const getPaymentSchema = object({
+  params: object({
+    reference: string(),
+  }),
+});
+
+export type GetPayment = z.infer<typeof getPaymentSchema>;
