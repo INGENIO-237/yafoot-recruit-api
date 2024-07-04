@@ -4,7 +4,7 @@ import { Router } from "express";
 import Container from "typedi";
 import PaymentsController from "../controllers/payments.controller";
 import validate from "../middlewares/validate-requests";
-import { createPaymentSchema } from "../schemas/payments.schemas";
+import { createPaymentSchema, getPaymentSchema } from "../schemas/payments.schemas";
 import { tryCatch } from "../utils/errors/errors.utils";
 
 const PaymentsRouter = Router();
@@ -14,6 +14,12 @@ PaymentsRouter.post(
   "",
   validate(createPaymentSchema),
   tryCatch(controller.initializePayment.bind(controller))
+);
+
+PaymentsRouter.get(
+  "/:reference",
+  validate(getPaymentSchema),
+  tryCatch(controller.getPayment.bind(controller))
 );
 
 export default PaymentsRouter;

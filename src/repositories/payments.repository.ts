@@ -1,6 +1,7 @@
 import { Service } from "typedi";
 import Payment from "../models/payments.model";
 import { PAYMENT_STATUS, PROVIDER } from "../utils/constants/payments";
+import { Types } from "mongoose";
 
 @Service()
 export default class PaymentRepo {
@@ -36,5 +37,11 @@ export default class PaymentRepo {
     status: PAYMENT_STATUS;
   }) {
     await Payment.findOneAndUpdate({ reference }, { status });
+  }
+
+  async getPayment({ reference, id }: { reference?: string; id?: string }) {
+    return await Payment.findOne({
+      $or: [{ reference }, { _id: new Types.ObjectId(id) }],
+    }).select("status amount reference");
   }
 }

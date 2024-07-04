@@ -4,7 +4,6 @@ import EventEmitter from "node:events";
 import { PAYMENTS } from "../utils/constants/hooks";
 import Container from "typedi";
 import { ToolBoxServices } from "../services/mobile";
-import { AxiosResponse } from "axios";
 import { PAYMENT_STATUS } from "../utils/constants/payments";
 import PaymentsService from "../services/payments.services";
 import logger from "../utils/logger";
@@ -12,9 +11,9 @@ import logger from "../utils/logger";
 const PaymentsHooks = new EventEmitter();
 
 PaymentsHooks.on(PAYMENTS.INITIALIZED, (reference: string) => {
-  let timeout = 1000 * 60 * 6; // 6 minutes
+  let timeout = 1000 * 60 * 10; // 10 minutes
   let exit = false;
-  const INTERVAL_TIME = 60000; // 1 minite
+  const INTERVAL_TIME = 30000; // 30 secondes
 
   const paymentService = Container.get(PaymentsService);
   const toolbox = Container.get(ToolBoxServices);

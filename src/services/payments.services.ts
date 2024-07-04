@@ -7,6 +7,8 @@ import { ToolBoxServices } from "./mobile";
 import { PAYMENT_STATUS } from "../utils/constants/payments";
 import PaymentsHooks from "../hooks/payments.hooks";
 import { PAYMENTS } from "../utils/constants/hooks";
+import ApiError from "../utils/errors/errors.base";
+import { HTTP } from "../utils/constants/common";
 
 @Service()
 export default class PaymentsService {
@@ -39,7 +41,7 @@ export default class PaymentsService {
       });
 
     // Persist initialized payment
-    const { paymentRef } = await this.repository.initializePayment({
+    await this.repository.initializePayment({
       session,
       candidate: candidate?._id.toString() as string,
       amount,
@@ -50,7 +52,7 @@ export default class PaymentsService {
     // Emit PAYMENT.INITIALIZED event to constantly check payment status
     PaymentsHooks.emit(PAYMENTS.INITIALIZED, reference);
 
-    return { paymentRef, authorization_url };
+    return { paymentRef: reference, authorization_url };
   }
 
   async updatePayment({
@@ -61,5 +63,23 @@ export default class PaymentsService {
     status: PAYMENT_STATUS;
   }) {
     await this.repository.updatePayment({ reference, status });
+  }
+
+  async getPayment({
+    reference,
+    id,
+    raiseException = false,
+  }: {
+    reference?: string;
+    id?: string;
+    raiseException?: boolean;
+  }) {
+    const payment = await this.repository.getPayment({ reference, id });
+
+    if (!payment && raiseException) {
+      throw new ApiError("Payment not found", HTTP.NOT_FOUND);
+    }
+
+    return payment;
   }
 }

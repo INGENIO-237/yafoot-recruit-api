@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 import PaymentsService from "../services/payments.services";
 import { Request, Response } from "express";
-import { CreatePayment } from "../schemas/payments.schemas";
+import { CreatePayment, GetPayment } from "../schemas/payments.schemas";
 import config from "../config";
 import { HTTP } from "../utils/constants/common";
 
@@ -24,5 +24,13 @@ export default class PaymentsController {
       authorization_url,
       message: "Initiated. Confirm the payment on your phone please.",
     });
+  }
+
+  async getPayment(req: Request<GetPayment["params"]>, res: Response) {
+    const payment = await this.service.getPayment({
+      reference: req.params.reference,
+    });
+
+    return res.status(HTTP.OK).json(payment);
   }
 }
