@@ -2,7 +2,7 @@ import qr from "qrcode";
 import { Service } from "typedi";
 import logger from "../utils/logger";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
-import sharp from "sharp";
+import sharp, { Metadata } from "sharp";
 import path from "node:path";
 import { SKRSContext2D, createCanvas, loadImage } from "@napi-rs/canvas";
 import PaymentsService from "./payments.services";
@@ -43,7 +43,7 @@ export default class CardsServices {
    * @param {("en" | "fr")} [lang="fr"]
    * @memberof CardsServices
    */
-  async generateCard(reference: string, lang: "en" | "fr" = "fr") {
+  async generateCard(reference: string, lang: "en" | "fr" = "en") {
     // TODO: Get candidate's info
 
     // Generate QR Code
@@ -52,14 +52,25 @@ export default class CardsServices {
     if (generatedQrCode) {
       // TODO: Pass candidate's info to buildCardRecto
       // TODO: Add QR Code and candidate's info on recto and save into tmp under `reference` dir
-      await this.buildCardRecto({ reference }, lang);
+      this.buildCardRecto({ reference }, lang).then(async () => {
+        // TODO: Assemble card's recto and verso
+        readdir(this._cardsDir).then((content) => {
+          let tries = 3;
+          let exit = false;
 
-      // TODO: Assemble card's recto and verso
-      await this.assembleCard(
-        reference,
-        path.join(this._cardsDir, `${reference}-recto.png`),
-        lang
-      );
+          const interval = setInterval((): void => {
+            tries -= 1;
+            this.assembleCard(
+              reference,
+              path.join(this._cardsDir, `${reference}-recto.png`),
+              lang
+            ).then(() => {
+              exit = true;
+            });
+            if (exit || tries < 1) clearInterval(interval);
+          }, 1500);
+        });
+      });
 
       // TODO: Upload card to cloudinary and save path to DB(Payment)
 
@@ -236,19 +247,19 @@ export default class CardsServices {
     );
     try {
       // Get metadata of the images
-      const metadata = await sharp(rectoPath).metadata();
+      const MODEL_WIDTH = 1083;
 
       // Resize images and extend with white background
       const [data1, data2] = await Promise.all([
         sharp(rectoPath)
-          .resize(Math.round((metadata.width as number) * 0.8))
+          .resize(Math.round((MODEL_WIDTH as number) * 0.8))
           .extend({
             bottom: margin,
             background: { r: 255, g: 255, b: 255, alpha: 1 },
           })
           .toBuffer(),
         sharp(versoPath)
-          .resize(Math.round((metadata.width as number) * 0.8))
+          .resize(Math.round((MODEL_WIDTH as number) * 0.8))
           .extend({
             top: margin / 2,
             background: { r: 255, g: 255, b: 255, alpha: 1 },
@@ -262,7 +273,7 @@ export default class CardsServices {
       // Combine images vertically with specified margin
       await sharp({
         create: {
-          width: Math.round((metadata.width as number) * 0.8),
+          width: Math.round((MODEL_WIDTH as number) * 0.8),
           height: (recto.height as number) + (verso.height as number) + margin,
           channels: 4,
           background: { r: 255, g: 255, b: 255, alpha: 1 },
