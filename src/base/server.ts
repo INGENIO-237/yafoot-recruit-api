@@ -1,10 +1,12 @@
-import "reflect-metadata";
+import "reflect-metadata"
 
 import express from "express";
 import router from "../router";
 import connectToDb from "./db";
 import errorHandler from "../utils/errors/errors.handler";
 import cors from "cors";
+import { v2 as cloudinary } from "cloudinary";
+import config from "../config";
 import Container from "typedi";
 import CardsServices from "../services/cards.services";
 
@@ -17,12 +19,16 @@ export default function createServer() {
   //  Middlewares
   server.use(express.json());
 
-  const card = Container.get(CardsServices);
+  // Cloudinary
+  cloudinary.config({
+    cloud_name: config.CLOUDINARY_NAME,
+    api_key: config.CLOUDINARY_API_KEY,
+    api_secret: config.CLOUDINARY_SECRET_KEY,
+  });
 
-  card.generateQrCode({ data: "Test QR CODE 1234567", name: "1" });
-  card.generateQrCode({ data: "Test QR CODE 1234567", name: "2" });
-  card.generateQrCode({ data: "Test QR CODE 1234567", name: "3" });
-  card.generateQrCode({ data: "Test QR CODE 1234567", name: "4" });
+  const image = Container.get(CardsServices)
+  image.generateQrCode({data:"YA-W69W", reference: "jdjdkhdwhkhwkkw"})
+  image.buildCardRecto("jdjdkhdwhkhwkkw", "fr")
 
   //  Cors
   server.use(cors());
