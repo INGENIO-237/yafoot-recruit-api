@@ -1,4 +1,4 @@
-import "reflect-metadata"
+import "reflect-metadata";
 
 import express from "express";
 import router from "../router";
@@ -26,9 +26,8 @@ export default function createServer() {
     api_secret: config.CLOUDINARY_SECRET_KEY,
   });
 
-  const image = Container.get(CardsServices)
-  image.generateQrCode({data:"YA-W69W", reference: "jdjdkhdwhkhwkkw"})
-  image.buildCardRecto("jdjdkhdwhkhwkkw", "fr")
+  const image = Container.get(CardsServices);
+  image.generateCard("ref-c3c07bff-4005-423c-9f26-57055e57b5d0");
 
   //  Cors
   server.use(cors());

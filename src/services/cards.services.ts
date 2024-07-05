@@ -1,14 +1,7 @@
 import qr from "qrcode";
 import { Service } from "typedi";
 import logger from "../utils/logger";
-import {
-  readFile,
-  writeFile,
-  unlink,
-  mkdir,
-  rmdir,
-  readdir,
-} from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import path from "node:path";
 import { SKRSContext2D, createCanvas, loadImage } from "@napi-rs/canvas";
@@ -43,12 +36,39 @@ export default class CardsServices {
 
     // console.log({ tmpContent });
   }
-
+  /**
+   * Generate candidate's participation card
+   *
+   * @param {string} reference
+   * @param {("en" | "fr")} [lang="fr"]
+   * @memberof CardsServices
+   */
   async generateCard(reference: string, lang: "en" | "fr" = "fr") {
-    // TODO: Generate QR Code
-    // TODO: Add QR Code and candidate's info on recto and save into tmp under `reference` dir
-    // TODO: Assemble card's recto and verso
-    // TODO: Upload card to cloudinary and save path to DB(Payment)
+    // TODO: Get candidate's info
+
+    // Generate QR Code
+    const generatedQrCode = this.generateQrCode({ pkId: "YA-W69W", reference });
+
+    if (generatedQrCode) {
+      // TODO: Pass candidate's info to buildCardRecto
+      // TODO: Add QR Code and candidate's info on recto and save into tmp under `reference` dir
+      await this.buildCardRecto({ reference }, lang);
+
+      // TODO: Assemble card's recto and verso
+      await this.assembleCard(
+        reference,
+        path.join(this._cardsDir, `${reference}-recto.png`),
+        lang
+      );
+
+      // TODO: Upload card to cloudinary and save path to DB(Payment)
+
+      // TODO: Uncomment here
+      //  Remove tmp files
+      //   unlink(path.join(this._cardsDir, `${reference}.png`));
+      //   unlink(path.join(this._cardsDir, `${reference}-recto.png`));
+      //   unlink(path.join(this._qrCodesDir, `${reference}.png`));
+    }
   }
 
   /**
@@ -58,18 +78,18 @@ export default class CardsServices {
    * @return {true | undefined}
    * @memberof CardsServices
    */
-  generateQrCode({
-    data,
+  private generateQrCode({
+    pkId,
     reference,
   }: {
-    data: any;
+    pkId: string;
     reference: string;
   }): true | undefined {
     try {
       logger.info("Generating qr code for: " + reference + "...");
       const dest = path.join(this._qrCodesDir, `${reference}.png`);
 
-      qr.toFile(dest, data, { width: 450 }, async function (err) {
+      qr.toFile(dest, pkId, { width: 450 }, async function (err) {
         if (err) throw err;
         // const file = await readFile(dest);
         // await writeFile(`./src/tmp/${reference}.png`, file);
@@ -92,12 +112,18 @@ export default class CardsServices {
    * @param {("en" | "fr")} lang
    * @memberof CardsServices
    */
-  async buildCardRecto(reference: string, lang: "en" | "fr") {
+  private async buildCardRecto(data: { reference: string }, lang: "en" | "fr") {
+    const { reference } = data;
+
+    logger.info(`Generating card recto for ${reference}...`);
+
     const recto = sharp(
       path.join(__dirname, "..", "public", "templates", lang, "recto.png")
     );
     const qrCode = sharp(path.join(this._qrCodesDir, reference + ".png"));
+
     const metadata = await recto.metadata();
+
     // Create canvas and add text to combined image
     const canvas = createCanvas(
       metadata.width as number,
@@ -107,24 +133,34 @@ export default class CardsServices {
 
     const output = path.join(this._cardsDir, reference + "-recto.png");
 
-    // Load combined image onto canvas
+    // Load recto and qrCode onto canvas
     const img = await loadImage(recto);
     const qr = await loadImage(qrCode);
     ctx.drawImage(img, 0, 0);
 
     // Overlay the QR Code
     ctx.drawImage(qr, 65, 1160);
+
     ctx.textAlign = "center";
 
     // Set text properties and add text
     // Lastname
-    this.insertText(ctx, "ABDEL-KALIF", { left: 405, top: 676 });
+    this.insertText(ctx, "ABDEL-KALIF", {
+      left: lang == "en" ? 445 : 405,
+      top: 676,
+    });
     // Firstname
-    this.insertText(ctx, "BEN HAMADOU", { left: 520, top: 745 });
+    this.insertText(ctx, "BEN HAMADOU", {
+      left: lang == "en" ? 580 : 520,
+      top: 745,
+    });
     // City
     this.insertText(ctx, "Douala", { left: 355, top: 813 });
     // Phone
-    this.insertText(ctx, "+237656144663", { left: 410, top: 880 });
+    this.insertText(ctx, "+237656144663", {
+      left: lang == "en" ? 480 : 410,
+      top: 880,
+    });
     this.insertText(ctx, "FORWARD", { left: 500, top: 955 });
     this.insertText(
       ctx,
@@ -143,9 +179,9 @@ export default class CardsServices {
     const finalBuffer = canvas.toBuffer("image/png");
     sharp(finalBuffer).toFile(output, (err, info) => {
       if (err) {
-        console.error("Error writing image:", err);
+        logger.error("Error writing image:", err);
       } else {
-        console.log("Image combined and text added successfully");
+        logger.info("Done");
       }
     });
   }
@@ -163,17 +199,22 @@ export default class CardsServices {
     ctx.fillText(text, coords.left, coords.top);
   }
 
-  // Assemble card's recto and verso
-  async assembleCard(imgPath?: string, lang: "en" | "fr" = "fr") {
-    // Define the paths to your images
-    const image1Path = path.join(
-      __dirname,
-      "..",
-      "public",
-      "model",
-      "model.png"
-    );
-    const image2Path = path.join(
+  /**
+   * Assemble card's recto and verso
+   *
+   * @private
+   * @param {string} rectoPath
+   * @param {("en" | "fr")} [lang="fr"]
+   * @memberof CardsServices
+   */
+  private async assembleCard(
+    reference: string,
+    rectoPath: string,
+    lang: "en" | "fr" = "fr"
+  ) {
+    logger.info(`Assembling recto and verso for: ${reference}...`);
+
+    const versoPath = path.join(
       __dirname,
       "..",
       "public",
@@ -186,23 +227,28 @@ export default class CardsServices {
     const margin = 60;
 
     // Define the output path
-    const output = path.join(__dirname, "..", "tmp", "cards", "output.png");
+    const output = path.join(
+      __dirname,
+      "..",
+      "tmp",
+      "cards",
+      `${reference}.png`
+    );
     try {
       // Get metadata of the images
-      const metadata1 = await sharp(image1Path).metadata();
-      const metadata2 = await sharp(image2Path).metadata();
+      const metadata = await sharp(rectoPath).metadata();
 
       // Resize images and extend with white background
       const [data1, data2] = await Promise.all([
-        sharp(image1Path)
-          .resize(Math.round((metadata1.width as number) * 0.8))
+        sharp(rectoPath)
+          .resize(Math.round((metadata.width as number) * 0.8))
           .extend({
             bottom: margin,
             background: { r: 255, g: 255, b: 255, alpha: 1 },
           })
           .toBuffer(),
-        sharp(image2Path)
-          .resize(Math.round((metadata1.width as number) * 0.8))
+        sharp(versoPath)
+          .resize(Math.round((metadata.width as number) * 0.8))
           .extend({
             top: margin / 2,
             background: { r: 255, g: 255, b: 255, alpha: 1 },
@@ -210,15 +256,14 @@ export default class CardsServices {
           .toBuffer(),
       ]);
 
-      const image1 = await sharp(data1).metadata();
-      const image2 = await sharp(data2).metadata();
+      const recto = await sharp(data1).metadata();
+      const verso = await sharp(data2).metadata();
 
       // Combine images vertically with specified margin
       await sharp({
         create: {
-          width: Math.round((metadata1.width as number) * 0.8),
-          height:
-            (image1.height as number) + (image2.height as number) + margin,
+          width: Math.round((metadata.width as number) * 0.8),
+          height: (recto.height as number) + (verso.height as number) + margin,
           channels: 4,
           background: { r: 255, g: 255, b: 255, alpha: 1 },
         },
@@ -227,13 +272,14 @@ export default class CardsServices {
           { input: data1, top: 0, left: 0 },
           {
             input: data2,
-            top: (image1.height as number) + margin / 2,
+            top: (recto.height as number) + margin / 2,
             left: 0,
           },
         ])
         .toFile(output);
+      logger.info("Done");
     } catch (err) {
-      console.error("Error processing images:", err);
+      logger.error("Error processing images:", err);
     }
   }
 }
