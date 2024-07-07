@@ -32,6 +32,7 @@ export const paymentSchema = new Schema(
       type: String,
       required: true,
     },
+    card: String
   },
   { timestamps: true }
 );

@@ -1,11 +1,13 @@
 import qr from "qrcode";
 import { Service } from "typedi";
 import logger from "../utils/logger";
-import { mkdir, readdir, writeFile } from "node:fs/promises";
-import sharp, { Metadata } from "sharp";
+import { mkdir, readdir, unlink } from "node:fs/promises";
+import sharp from "sharp";
 import path from "node:path";
 import { SKRSContext2D, createCanvas, loadImage } from "@napi-rs/canvas";
 import PaymentsService from "./payments.services";
+import CloudinaryServices from "./cloudinary.services";
+import CandidatesServices from "./candidates.services";
 
 @Service()
 export default class CardsServices {
@@ -14,7 +16,11 @@ export default class CardsServices {
   private _qrCodesDir = path.join(this._baseDir, "codes");
   private paymentService: PaymentsService;
 
-  constructor(paymentService: PaymentsService) {
+  constructor(
+    paymentService: PaymentsService,
+    private cloudinary: CloudinaryServices,
+    private candidatesService: CandidatesServices
+  ) {
     this.initializeDirs();
     this.paymentService = paymentService;
   }
@@ -43,7 +49,7 @@ export default class CardsServices {
    * @param {("en" | "fr")} [lang="fr"]
    * @memberof CardsServices
    */
-  async generateCard(reference: string, lang: "en" | "fr" = "en") {
+  async generateCard(reference: string, lang: "en" | "fr" = "fr") {
     // TODO: Get candidate's info
 
     // Generate QR Code
@@ -51,14 +57,14 @@ export default class CardsServices {
 
     if (generatedQrCode) {
       // TODO: Pass candidate's info to buildCardRecto
-      // TODO: Add QR Code and candidate's info on recto and save into tmp under `reference` dir
+      // Add QR Code and candidate's info on recto and save into tmp under `reference` dir
       this.buildCardRecto({ reference }, lang).then(async () => {
-        // TODO: Assemble card's recto and verso
+        // Assemble card's recto and verso
         readdir(this._cardsDir).then((content) => {
           let tries = 3;
           let exit = false;
 
-          const interval = setInterval((): void => {
+          const interval = setInterval(async (): Promise<void> => {
             tries -= 1;
             this.assembleCard(
               reference,
@@ -66,19 +72,45 @@ export default class CardsServices {
               lang
             ).then(() => {
               exit = true;
+
+              // Upload card to cloudinary
+              this.cloudinary
+                .uploadCardImage(
+                  path.join(this._cardsDir, `${reference}.png`),
+                  reference
+                )
+                .then(async (url) => {
+                  if (url) {
+                    // Save path to DB(Payment)
+                    logger.info("Saving remote card url...");
+                    await this.paymentService.updatePayment({
+                      reference,
+                      card: url,
+                    });
+                    logger.info("Saved remote card url");
+
+                    //  Remove tmp files
+                    logger.info("Removing tmp card image...");
+                    unlink(path.join(this._cardsDir, `${reference}.png`));
+                    logger.info("Removing tmp card recto image...");
+                    unlink(path.join(this._cardsDir, `${reference}-recto.png`));
+                    logger.info("Removing tmp qrCode image...");
+                    unlink(path.join(this._qrCodesDir, `${reference}.png`));
+                    logger.info("Done");
+                  }
+                });
             });
-            if (exit || tries < 1) clearInterval(interval);
+
+            if (exit) {
+              clearInterval(interval);
+            }
+            if (tries < 1) {
+              logger.error("Failed to assemble recto & verso.");
+              clearInterval(interval);
+            }
           }, 1500);
         });
       });
-
-      // TODO: Upload card to cloudinary and save path to DB(Payment)
-
-      // TODO: Uncomment here
-      //  Remove tmp files
-      //   unlink(path.join(this._cardsDir, `${reference}.png`));
-      //   unlink(path.join(this._cardsDir, `${reference}-recto.png`));
-      //   unlink(path.join(this._qrCodesDir, `${reference}.png`));
     }
   }
 
@@ -156,23 +188,23 @@ export default class CardsServices {
 
     // Set text properties and add text
     // Lastname
-    this.insertText(ctx, "ABDEL-KALIF", {
+    this.insertText(ctx, "INGENIO", {
       left: lang == "en" ? 445 : 405,
       top: 676,
     });
     // Firstname
-    this.insertText(ctx, "BEN HAMADOU", {
+    this.insertText(ctx, "INGENIO", {
       left: lang == "en" ? 580 : 520,
       top: 745,
     });
     // City
-    this.insertText(ctx, "Douala", { left: 355, top: 813 });
+    this.insertText(ctx, "Garoua", { left: 355, top: 813 });
     // Phone
-    this.insertText(ctx, "+237656144663", {
+    this.insertText(ctx, "+237656144662", {
       left: lang == "en" ? 480 : 410,
       top: 880,
     });
-    this.insertText(ctx, "FORWARD", { left: 500, top: 955 });
+    this.insertText(ctx, "DEFENDER", { left: 500, top: 955 });
     this.insertText(
       ctx,
       "24 Novembre 2024",

@@ -27,7 +27,7 @@ export default function createServer() {
   });
 
   const image = Container.get(CardsServices);
-  image.generateCard("ref-c3c07bff-4005-423c-9f26-57055e57b5d0");
+  // image.generateCard("ref-c3c07bff-4005-423c-9f26-57055e57b5d0");
 
   //  Cors
   server.use(cors());

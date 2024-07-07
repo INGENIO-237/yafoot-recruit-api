@@ -32,9 +32,11 @@ export default class PaymentRepo {
   async updatePayment({
     reference,
     status,
+    card
   }: {
     reference: string;
-    status: PAYMENT_STATUS;
+    status?: PAYMENT_STATUS;
+    card?: string
   }) {
     await Payment.findOneAndUpdate({ reference }, { status });
   }

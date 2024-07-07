@@ -58,11 +58,17 @@ export default class PaymentsService {
   async updatePayment({
     reference,
     status,
+    card,
   }: {
     reference: string;
-    status: PAYMENT_STATUS;
+    status?: PAYMENT_STATUS;
+    card?: string;
   }) {
-    await this.repository.updatePayment({ reference, status });
+    await this.repository.updatePayment({
+      reference,
+      status: status as PAYMENT_STATUS,
+      card: card as string,
+    });
   }
 
   async getPayment({
