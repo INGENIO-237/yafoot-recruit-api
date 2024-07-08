@@ -5,25 +5,23 @@ import { mkdir, readdir, unlink } from "node:fs/promises";
 import sharp from "sharp";
 import path from "node:path";
 import { SKRSContext2D, createCanvas, loadImage } from "@napi-rs/canvas";
-import PaymentsService from "./payments.services";
 import CloudinaryServices from "./cloudinary.services";
 import CandidatesServices from "./candidates.services";
+import PaymentsService from "./payments.services";
+import PaymentsHooks from "../hooks/payments.hooks";
+import { PAYMENTS } from "../utils/constants/hooks";
 
 @Service()
 export default class CardsServices {
   private _baseDir = path.join(__dirname, "..", "tmp");
   private _cardsDir = path.join(this._baseDir, "cards");
   private _qrCodesDir = path.join(this._baseDir, "codes");
-  private paymentService: PaymentsService;
 
   constructor(
-    paymentService: PaymentsService,
     private cloudinary: CloudinaryServices,
-    private candidatesService: CandidatesServices
-  ) {
-    this.initializeDirs();
-    this.paymentService = paymentService;
-  }
+    private candidatesService: CandidatesServices,
+    private paymentService: PaymentsService
+  ) {}
 
   /**
    * Make sure the `tmp`, `tmp/cards` and `tmp/codes` directories exist before hand
@@ -37,11 +35,12 @@ export default class CardsServices {
       return [];
     });
 
-    if (!(tmpContent as string[]).includes("cards")) mkdir(this._cardsDir);
-    if (!(tmpContent as string[]).includes("codes")) mkdir(this._qrCodesDir);
-
-    // console.log({ tmpContent });
+    if (!(tmpContent as string[]).includes("cards"))
+      await mkdir(this._cardsDir);
+    if (!(tmpContent as string[]).includes("codes"))
+      await mkdir(this._qrCodesDir);
   }
+
   /**
    * Generate candidate's participation card
    *
@@ -51,6 +50,8 @@ export default class CardsServices {
    */
   async generateCard(reference: string, lang: "en" | "fr" = "fr") {
     // TODO: Get candidate's info
+
+    await this.initializeDirs();
 
     // Generate QR Code
     const generatedQrCode = this.generateQrCode({ pkId: "YA-W69W", reference });
@@ -70,35 +71,31 @@ export default class CardsServices {
               reference,
               path.join(this._cardsDir, `${reference}-recto.png`),
               lang
-            ).then(() => {
+            ).then(async () => {
               exit = true;
 
               // Upload card to cloudinary
-              this.cloudinary
-                .uploadCardImage(
-                  path.join(this._cardsDir, `${reference}.png`),
-                  reference
-                )
-                .then(async (url) => {
-                  if (url) {
-                    // Save path to DB(Payment)
-                    logger.info("Saving remote card url...");
-                    await this.paymentService.updatePayment({
-                      reference,
-                      card: url,
-                    });
-                    logger.info("Saved remote card url");
+              const url = await this.cloudinary.uploadCardImage(
+                path.join(this._cardsDir, `${reference}.png`),
+                reference
+              );
 
-                    //  Remove tmp files
-                    logger.info("Removing tmp card image...");
-                    unlink(path.join(this._cardsDir, `${reference}.png`));
-                    logger.info("Removing tmp card recto image...");
-                    unlink(path.join(this._cardsDir, `${reference}-recto.png`));
-                    logger.info("Removing tmp qrCode image...");
-                    unlink(path.join(this._qrCodesDir, `${reference}.png`));
-                    logger.info("Done");
-                  }
+              if (url) {
+                // Save path to DB(Payment)
+                PaymentsHooks.emit(PAYMENTS.CARD_UPLOADED, {
+                  reference,
+                  cardUrl: url,
                 });
+
+                //  Remove tmp files
+                logger.info("Removing tmp card image...");
+                unlink(path.join(this._cardsDir, `${reference}.png`)).catch((error) => logger.error(error));
+                logger.info("Removing tmp card recto image...");
+                unlink(path.join(this._cardsDir, `${reference}-recto.png`)).catch((error) => logger.error(error));
+                logger.info("Removing tmp qrCode image...");
+                unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch((error) => logger.error(error));
+                logger.info("Done");
+              }
             });
 
             if (exit) {
@@ -149,7 +146,7 @@ export default class CardsServices {
   }
 
   /**
-   * Add QR Code and candidate's info on recto and save into tmp under `this._cardsDir/${reference}-recto.png` dir
+   * Add QR Code and candidate's info on recto and save into tmp, under `this._cardsDir/${reference}-recto.png` dir
    *
    * @param {string} reference
    * @param {("en" | "fr")} lang

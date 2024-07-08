@@ -32,7 +32,10 @@ export const paymentSchema = new Schema(
       type: String,
       required: true,
     },
-    card: String
+    card: {
+      type: String,
+      default: undefined,
+    },
   },
   { timestamps: true }
 );

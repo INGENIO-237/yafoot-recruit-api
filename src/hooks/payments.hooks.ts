@@ -7,6 +7,7 @@ import { ToolBoxServices } from "../services/mobile";
 import { PAYMENT_STATUS } from "../utils/constants/payments";
 import PaymentsService from "../services/payments.services";
 import logger from "../utils/logger";
+import CardsServices from "../services/cards.services";
 
 const PaymentsHooks = new EventEmitter();
 
@@ -40,7 +41,7 @@ PaymentsHooks.on(PAYMENTS.INITIALIZED, (reference: string) => {
 
       if (status == PAYMENT_STATUS.SUCCEEDED) {
         // Emit PAYMENTS.SUCCEEDED event to automatically create candidate's card
-        PaymentsHooks.emit(PAYMENTS.SUCCEEDED, reference);
+        PaymentsHooks.emit(PAYMENTS.SUCCEEDED, {reference});
       }
 
       if (timeout < 1 || exit) clearInterval(interval);
@@ -50,9 +51,31 @@ PaymentsHooks.on(PAYMENTS.INITIALIZED, (reference: string) => {
   }, INTERVAL_TIME);
 });
 
-PaymentsHooks.on(PAYMENTS.SUCCEEDED, (reference: string) => {
-  // TODO: Generate candidate's card and send him the link via SMS
-  console.log("Generate card for payment: " + reference);
-});
+PaymentsHooks.on(
+  PAYMENTS.SUCCEEDED,
+  ({ reference, lang = "fr" }: { reference: string; lang?: "en" | "fr" }) => {
+    const service = Container.get(CardsServices);
+
+    // Generate candidate's card
+    service
+      .generateCard(reference, lang)
+      .catch((error) => {
+        logger.error(error);
+      });
+  }
+);
+
+PaymentsHooks.on(
+  PAYMENTS.CARD_UPLOADED,
+  async ({ reference, cardUrl }: { reference: string; cardUrl: string }) => {
+    const service = Container.get(PaymentsService);
+    // TODO: Save cardUrl to DB
+    logger.info("Saving remote card url...");
+    await service.updatePayment({ reference, card: cardUrl });
+    logger.info("Saved remote card url");
+
+    // TODO: send card's link via SMS
+  }
+);
 
 export default PaymentsHooks;
