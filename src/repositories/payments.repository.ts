@@ -44,6 +44,6 @@ export default class PaymentRepo {
   async getPayment({ reference, id }: { reference?: string; id?: string }) {
     return await Payment.findOne({
       $or: [{ reference }, { _id: new Types.ObjectId(id) }],
-    }).select("status amount reference").populate("candidate");
+    }).select("status amount reference card").populate("candidate");
   }
 }
