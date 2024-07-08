@@ -38,3 +38,13 @@ export function formatDate(datetime: string) {
 
   return datetime;
 }
+
+export function formatDateToString(date: Date | string) {
+  let buffer = new Date(date);
+
+  return buffer.toLocaleDateString("fr-CM", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
