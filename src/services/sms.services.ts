@@ -22,6 +22,23 @@ export default class SmsServices {
     });
   }
 
+  async sendCardUrlSms({
+    firstname,
+    lastname,
+    phone,
+    cardUrl,
+  }: {
+    firstname?: string;
+    lastname: string;
+    phone: string;
+    cardUrl: string;
+  }) {
+    await this.twilio.sendSms({
+      message: `Hello ${firstname} ${lastname},\n Your registration has been fulfilled.\nHere is your participation card from Yafoot-recruit: ${cardUrl}.\nSave it and print it. You will need that to enter the tests center.`,
+      recipient: phone,
+    });
+  }
+
   async sendNewSessionCreatedSms({
     firstname,
     lastname,

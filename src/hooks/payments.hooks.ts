@@ -8,6 +8,9 @@ import { PAYMENT_STATUS } from "../utils/constants/payments";
 import PaymentsService from "../services/payments.services";
 import logger from "../utils/logger";
 import CardsServices from "../services/cards.services";
+import SmsServices from "../services/sms.services";
+import { IPayment } from "../models/payments.model";
+import { ICandidate } from "../models/candidates.model";
 
 const PaymentsHooks = new EventEmitter();
 
@@ -38,7 +41,7 @@ PaymentsHooks.on(PAYMENTS.INITIALIZED, (reference: string) => {
 
       if (status == PAYMENT_STATUS.SUCCEEDED) {
         // Emit PAYMENTS.SUCCEEDED event to automatically create candidate's card
-        PaymentsHooks.emit(PAYMENTS.SUCCEEDED, {reference});
+        PaymentsHooks.emit(PAYMENTS.SUCCEEDED, { reference });
       }
 
       if (timeout < 1 || exit) clearInterval(interval);
@@ -54,11 +57,9 @@ PaymentsHooks.on(
     const service = Container.get(CardsServices);
 
     // Generate candidate's card
-    service
-      .generateCard(reference, lang)
-      .catch((error) => {
-        logger.error(error);
-      });
+    service.generateCard(reference, lang).catch((error) => {
+      logger.error(error);
+    });
   }
 );
 
@@ -71,7 +72,21 @@ PaymentsHooks.on(
     await service.updatePayment({ reference, card: cardUrl });
     logger.info("Saved remote card url");
 
-    // TODO: send card's link via SMS
+    // Send card's link via SMS
+    const payment = await service.getPayment({ reference });
+
+    const { candidate } = payment as IPayment;
+    
+    const sms = Container.get(SmsServices);
+
+    const { firstname, lastname, phone } = candidate as ICandidate;
+
+    sms.sendCardUrlSms({
+      firstname: firstname as string | undefined,
+      lastname,
+      phone,
+      cardUrl,
+    });
   }
 );
 
