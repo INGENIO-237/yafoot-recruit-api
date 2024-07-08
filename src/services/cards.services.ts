@@ -59,6 +59,7 @@ export default class CardsServices {
     if (generatedQrCode) {
       // TODO: Pass candidate's info to buildCardRecto
       // Add QR Code and candidate's info on recto and save into tmp under `reference` dir
+      // TODO: Refactor this code to not nest functions more than 4 levels deep.
       this.buildCardRecto({ reference }, lang).then(async () => {
         // Assemble card's recto and verso
         readdir(this._cardsDir).then((content) => {
@@ -89,11 +90,17 @@ export default class CardsServices {
 
                 //  Remove tmp files
                 logger.info("Removing tmp card image...");
-                unlink(path.join(this._cardsDir, `${reference}.png`)).catch((error) => logger.error(error));
+                unlink(path.join(this._cardsDir, `${reference}.png`)).catch(
+                  (error) => logger.error(error)
+                );
                 logger.info("Removing tmp card recto image...");
-                unlink(path.join(this._cardsDir, `${reference}-recto.png`)).catch((error) => logger.error(error));
+                unlink(
+                  path.join(this._cardsDir, `${reference}-recto.png`)
+                ).catch((error) => logger.error(error));
                 logger.info("Removing tmp qrCode image...");
-                unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch((error) => logger.error(error));
+                unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch(
+                  (error) => logger.error(error)
+                );
                 logger.info("Done");
               }
             });
@@ -131,9 +138,6 @@ export default class CardsServices {
 
       qr.toFile(dest, pkId, { width: 450 }, async function (err) {
         if (err) throw err;
-        // const file = await readFile(dest);
-        // await writeFile(`./src/tmp/${reference}.png`, file);
-        // await unlink(dest);
         logger.info("Done");
       });
 

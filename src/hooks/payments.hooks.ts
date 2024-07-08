@@ -19,11 +19,8 @@ PaymentsHooks.on(PAYMENTS.INITIALIZED, (reference: string) => {
   const paymentService = Container.get(PaymentsService);
   const toolbox = Container.get(ToolBoxServices);
 
-  // console.log({ reference });
-
   const interval = setInterval(async (): Promise<void> => {
     timeout -= INTERVAL_TIME;
-    // console.log("Verifying payment status...");
 
     try {
       const { status } = await toolbox.getPayment(reference);
