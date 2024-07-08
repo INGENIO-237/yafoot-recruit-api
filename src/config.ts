@@ -30,4 +30,15 @@ export default {
   INTOUCH_USERNAME: process.env.INTOUCH_USERNAME as string,
   INTOUCH_PWD: process.env.INTOUCH_PWD as string,
   INTOUCH_CALLBACK: process.env.INTOUCH_CALLBACK as string,
+
+  // CLOUDINARY
+  CLOUDINARY_NAME: (process.env.APP_ENV === ENV.PROD
+    ? process.env.CLOUDINARY_NAME_LIVE
+    : process.env.CLOUDINARY_NAME_TEST) as string,
+  CLOUDINARY_API_KEY: (process.env.APP_ENV === ENV.PROD
+    ? process.env.CLOUDINARY_API_KEY_LIVE
+    : process.env.CLOUDINARY_API_KEY_TEST) as string,
+  CLOUDINARY_SECRET_KEY: (process.env.APP_ENV === ENV.PROD
+    ? process.env.CLOUDINARY_SECRET_KEY_LIVE
+    : process.env.CLOUDINARY_SECRET_KEY_TEST) as string,
 };

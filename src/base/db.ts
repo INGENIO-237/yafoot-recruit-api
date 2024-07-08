@@ -15,7 +15,6 @@ export default async function connectToDb() {
     await mongoose.connect(config.DB_URI);
     logger.info("Connected to DB");
   } catch (error: any) {
-    
     if (retries > 0) {
       retries -= 1;
       logger.error(
