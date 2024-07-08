@@ -19,11 +19,8 @@ PaymentsHooks.on(PAYMENTS.INITIALIZED, (reference: string) => {
   const paymentService = Container.get(PaymentsService);
   const toolbox = Container.get(ToolBoxServices);
 
-  // console.log({ reference });
-
   const interval = setInterval(async (): Promise<void> => {
     timeout -= INTERVAL_TIME;
-    // console.log("Verifying payment status...");
 
     try {
       const { status } = await toolbox.getPayment(reference);
@@ -69,7 +66,7 @@ PaymentsHooks.on(
   PAYMENTS.CARD_UPLOADED,
   async ({ reference, cardUrl }: { reference: string; cardUrl: string }) => {
     const service = Container.get(PaymentsService);
-    // TODO: Save cardUrl to DB
+    // Save cardUrl to DB
     logger.info("Saving remote card url...");
     await service.updatePayment({ reference, card: cardUrl });
     logger.info("Saved remote card url");

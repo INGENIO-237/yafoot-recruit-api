@@ -1,27 +1,36 @@
+import "reflect-metadata";
+
 import qr from "qrcode";
-import { Service } from "typedi";
+import Container, { Service } from "typedi";
 import logger from "../utils/logger";
 import { mkdir, readdir, unlink } from "node:fs/promises";
 import sharp from "sharp";
 import path from "node:path";
 import { SKRSContext2D, createCanvas, loadImage } from "@napi-rs/canvas";
 import CloudinaryServices from "./cloudinary.services";
-import CandidatesServices from "./candidates.services";
 import PaymentsService from "./payments.services";
 import PaymentsHooks from "../hooks/payments.hooks";
 import { PAYMENTS } from "../utils/constants/hooks";
+import { IPayment } from "../models/payments.model";
+import { ICandidate } from "../models/candidates.model";
+import { CITIES, POSITIONS } from "../utils/constants/candidates";
+import { ISession } from "../models/sessions.model";
+import { formatDateToString } from "../utils/utilities";
+import SessionsServices from "./sessions.services";
 
 @Service()
 export default class CardsServices {
   private _baseDir = path.join(__dirname, "..", "tmp");
   private _cardsDir = path.join(this._baseDir, "cards");
   private _qrCodesDir = path.join(this._baseDir, "codes");
+  private paymentService: PaymentsService;
 
   constructor(
     private cloudinary: CloudinaryServices,
-    private candidatesService: CandidatesServices,
-    private paymentService: PaymentsService
-  ) {}
+    private session: SessionsServices
+  ) {
+    this.paymentService = Container.get(PaymentsService);
+  }
 
   /**
    * Make sure the `tmp`, `tmp/cards` and `tmp/codes` directories exist before hand
@@ -49,17 +58,31 @@ export default class CardsServices {
    * @memberof CardsServices
    */
   async generateCard(reference: string, lang: "en" | "fr" = "fr") {
-    // TODO: Get candidate's info
-
     await this.initializeDirs();
 
+    // Get candidate's info
+    const payment = await this.paymentService.getPayment({ reference });
+
+    const { candidate } = payment as IPayment;
+    const session = await this.session.getLatestSession();
+
     // Generate QR Code
-    const generatedQrCode = this.generateQrCode({ pkId: "YA-W69W", reference });
+    const generatedQrCode = this.generateQrCode({
+      pkId: (candidate as ICandidate).publicId as string,
+      reference,
+    });
 
     if (generatedQrCode) {
-      // TODO: Pass candidate's info to buildCardRecto
+      // TODO: Refactor this code to not nest functions more than 4 levels deep.
       // Add QR Code and candidate's info on recto and save into tmp under `reference` dir
-      this.buildCardRecto({ reference }, lang).then(async () => {
+      this.buildCardRecto(
+        {
+          reference,
+          session: session as ISession,
+          candidate: candidate as ICandidate,
+        },
+        lang
+      ).then(async () => {
         // Assemble card's recto and verso
         readdir(this._cardsDir).then((content) => {
           let tries = 3;
@@ -89,11 +112,17 @@ export default class CardsServices {
 
                 //  Remove tmp files
                 logger.info("Removing tmp card image...");
-                unlink(path.join(this._cardsDir, `${reference}.png`)).catch((error) => logger.error(error));
+                unlink(path.join(this._cardsDir, `${reference}.png`)).catch(
+                  (error) => logger.error(error)
+                );
                 logger.info("Removing tmp card recto image...");
-                unlink(path.join(this._cardsDir, `${reference}-recto.png`)).catch((error) => logger.error(error));
+                unlink(
+                  path.join(this._cardsDir, `${reference}-recto.png`)
+                ).catch((error) => logger.error(error));
                 logger.info("Removing tmp qrCode image...");
-                unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch((error) => logger.error(error));
+                unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch(
+                  (error) => logger.error(error)
+                );
                 logger.info("Done");
               }
             });
@@ -131,9 +160,6 @@ export default class CardsServices {
 
       qr.toFile(dest, pkId, { width: 450 }, async function (err) {
         if (err) throw err;
-        // const file = await readFile(dest);
-        // await writeFile(`./src/tmp/${reference}.png`, file);
-        // await unlink(dest);
         logger.info("Done");
       });
 
@@ -152,8 +178,14 @@ export default class CardsServices {
    * @param {("en" | "fr")} lang
    * @memberof CardsServices
    */
-  private async buildCardRecto(data: { reference: string }, lang: "en" | "fr") {
-    const { reference } = data;
+  private async buildCardRecto(
+    data: { reference: string; candidate: ICandidate; session: ISession },
+    lang: "en" | "fr"
+  ) {
+    const { reference, candidate, session } = data;
+    const { date } = session as ISession;
+    const { firstname, lastname, phone, city, position, publicId } =
+      candidate as ICandidate;
 
     logger.info(`Generating card recto for ${reference}...`);
 
@@ -185,32 +217,38 @@ export default class CardsServices {
 
     // Set text properties and add text
     // Lastname
-    this.insertText(ctx, "INGENIO", {
+    this.insertText(ctx, lastname, {
       left: lang == "en" ? 445 : 405,
       top: 676,
     });
     // Firstname
-    this.insertText(ctx, "INGENIO", {
+    this.insertText(ctx, firstname as string, {
       left: lang == "en" ? 580 : 520,
       top: 745,
     });
     // City
-    this.insertText(ctx, "Garoua", { left: 355, top: 813 });
+    this.insertText(ctx, city as unknown as CITIES as string, {
+      left: 370,
+      top: 813,
+    });
     // Phone
-    this.insertText(ctx, "+237656144662", {
+    this.insertText(ctx, phone, {
       left: lang == "en" ? 480 : 410,
       top: 880,
     });
-    this.insertText(ctx, "DEFENDER", { left: 500, top: 955 });
+    this.insertText(ctx, position as unknown as POSITIONS as string, {
+      left: 500,
+      top: 955,
+    });
     this.insertText(
       ctx,
-      "24 Novembre 2024",
+      formatDateToString(date),
       { left: 900, top: 1460 },
       { color: "black", size: 40 }
     );
     this.insertText(
       ctx,
-      "YA-W69W",
+      publicId as string,
       { left: 825, top: 1530 },
       { color: "black", size: 40 }
     );
