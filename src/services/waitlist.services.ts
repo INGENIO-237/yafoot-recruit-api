@@ -16,8 +16,8 @@ export default class WaitlistServices {
     return await this.repository.getWaitlist();
   }
 
-  async getCandidateWaitlist(candidateId: string) {
-    return await this.repository.getWaitlist();
+  async getFromWaitlist(candidateId: string) {
+    return await this.repository.getFromWaitlist(candidateId);
   }
 
   async registerToWaitlist({ publicId }: RegisterToWaitlist["body"]) {
@@ -27,7 +27,7 @@ export default class WaitlistServices {
 
     const candidateId = candidate?._id.toString() as string;
 
-    const alreadyRegistered = await this.getCandidateWaitlist(candidateId);
+    const alreadyRegistered = await this.getFromWaitlist(candidateId);
 
     if (alreadyRegistered) {
       throw new ApiError(
@@ -39,5 +39,9 @@ export default class WaitlistServices {
     return await this.repository.registerToWaitlist(
       candidate?._id.toString() as string
     );
+  }
+
+  async removeFromWaitlist(candidateId: string) {
+    await this.repository.removeFromWaitlist(candidateId);
   }
 }
