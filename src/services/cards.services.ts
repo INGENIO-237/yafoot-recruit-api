@@ -73,69 +73,68 @@ export default class CardsServices {
     });
 
     if (generatedQrCode) {
-      // TODO: Refactor this code to not nest functions more than 4 levels deep.
       // Add QR Code and candidate's info on recto and save into tmp under `reference` dir
-      this.buildCardRecto(
+      await this.buildCardRecto(
         {
           reference,
           session: session as ISession,
           candidate: candidate as ICandidate,
         },
         lang
-      ).then(async () => {
-        // Assemble card's recto and verso
-        readdir(this._cardsDir).then((content) => {
-          let tries = 3;
-          let exit = false;
+      );
 
-          const interval = setInterval(async (): Promise<void> => {
-            tries -= 1;
-            this.assembleCard(
-              reference,
-              path.join(this._cardsDir, `${reference}-recto.png`),
-              lang
-            ).then(async () => {
-              exit = true;
+      // Assemble card's recto and verso
+      readdir(this._cardsDir).then((content) => {
+        let tries = 3;
+        let exit = false;
 
-              // Upload card to cloudinary
-              const url = await this.cloudinary.uploadCardImage(
-                path.join(this._cardsDir, `${reference}.png`),
-                reference
+        const interval = setInterval(async (): Promise<void> => {
+          tries -= 1;
+          this.assembleCard(
+            reference,
+            path.join(this._cardsDir, `${reference}-recto.png`),
+            lang
+          ).then(async () => {
+            exit = true;
+
+            // Upload card to cloudinary
+            const url = await this.cloudinary.uploadCardImage(
+              path.join(this._cardsDir, `${reference}.png`),
+              reference
+            );
+
+            if (url) {
+              // Save path to DB(Payment)
+              PaymentsHooks.emit(PAYMENTS.CARD_UPLOADED, {
+                reference,
+                cardUrl: url,
+              });
+
+              // Remove tmp files
+              logger.info("Removing tmp card image...");
+              unlink(path.join(this._cardsDir, `${reference}.png`)).catch(
+                (error) => logger.error(error)
               );
-
-              if (url) {
-                // Save path to DB(Payment)
-                PaymentsHooks.emit(PAYMENTS.CARD_UPLOADED, {
-                  reference,
-                  cardUrl: url,
-                });
-
-                //  Remove tmp files
-                logger.info("Removing tmp card image...");
-                unlink(path.join(this._cardsDir, `${reference}.png`)).catch(
-                  (error) => logger.error(error)
-                );
-                logger.info("Removing tmp card recto image...");
-                unlink(
-                  path.join(this._cardsDir, `${reference}-recto.png`)
-                ).catch((error) => logger.error(error));
-                logger.info("Removing tmp qrCode image...");
-                unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch(
-                  (error) => logger.error(error)
-                );
-                logger.info("Done");
-              }
-            });
-
-            if (exit) {
-              clearInterval(interval);
+              logger.info("Removing tmp card recto image...");
+              unlink(path.join(this._cardsDir, `${reference}-recto.png`)).catch(
+                (error) => logger.error(error)
+              );
+              logger.info("Removing tmp qrCode image...");
+              unlink(path.join(this._qrCodesDir, `${reference}.png`)).catch(
+                (error) => logger.error(error)
+              );
+              logger.info("Done");
             }
-            if (tries < 1) {
-              logger.error("Failed to assemble recto & verso.");
-              clearInterval(interval);
-            }
-          }, 1500);
-        });
+          });
+
+          if (exit) {
+            clearInterval(interval);
+          }
+          if (tries < 1) {
+            logger.error("Failed to assemble recto & verso.");
+            clearInterval(interval);
+          }
+        }, 1500);
       });
     }
   }
