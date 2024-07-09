@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import EventEmitter from "node:events";
-import { PAYMENTS } from "../utils/constants/hooks";
+import { CANDIDATES, PAYMENTS } from "../utils/constants/hooks";
 import Container from "typedi";
 import { ToolBoxServices } from "../services/mobile";
 import { PAYMENT_STATUS } from "../utils/constants/payments";
@@ -11,6 +11,8 @@ import CardsServices from "../services/cards.services";
 import SmsServices from "../services/sms.services";
 import { IPayment } from "../models/payments.model";
 import { ICandidate } from "../models/candidates.model";
+import { Document } from "mongoose";
+import CandidatesEvents from "./candidates.hooks";
 
 const PaymentsHooks = new EventEmitter();
 
@@ -57,9 +59,26 @@ PaymentsHooks.on(
     const service = Container.get(CardsServices);
 
     // Generate candidate's card
-    service.generateCard(reference, lang).catch((error) => {
-      logger.error(error);
-    });
+    service
+      .generateCard(reference, lang)
+      .then(async () => {
+        // Remove Candidate from waitlist
+        const paymentService = Container.get(PaymentsService);
+
+        const payment = await paymentService.getPayment({ reference });
+
+        const { candidate } = payment as IPayment;
+        const { _id: candidateId } = candidate as Document<
+          unknown,
+          any,
+          ICandidate
+        >;
+
+        CandidatesEvents.emit(CANDIDATES.REMOVE_FROM_WAITLIST, candidateId);
+      })
+      .catch((error) => {
+        logger.error(error);
+      });
   }
 );
 
@@ -76,7 +95,7 @@ PaymentsHooks.on(
     const payment = await service.getPayment({ reference });
 
     const { candidate } = payment as IPayment;
-    
+
     const sms = Container.get(SmsServices);
 
     const { firstname, lastname, phone } = candidate as ICandidate;
