@@ -34,8 +34,6 @@ SessionsEvents.on(SESSIONS.CREATED, async (date: string) => {
           date,
           phone: phone as string,
         });
-
-        // TODO: Remove candidate from waitlist by emitting an REMOVE_FROM_WAITLIST
       }
     });
   } catch (error) {

@@ -46,7 +46,7 @@ CandidatesEvents.on(
 CandidatesEvents.on(
   CANDIDATES.REMOVE_FROM_WAITLIST,
   async (candidateId: string) => {
-    // TODO: Verify if candidate is registered to the waitlist. If so, remove candidate from it.
+    // Verify if candidate is registered to the waitlist. If so, remove candidate from it.
     const waitlist = Container.get(WaitlistServices);
 
     const isPresent = await waitlist.getFromWaitlist(candidateId);
