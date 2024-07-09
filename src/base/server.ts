@@ -16,7 +16,17 @@ export default function createServer() {
   server.use(express.json());
 
   //  Cors
-  server.use(cors());
+  server.use(
+    cors({
+      origin: [
+        "http://localhost:3000",
+        "https://yafoot-fc.com",
+        "http://yafoot-fc.com",
+        "https://admin.yafoot-fc.com",
+        "http://admin.yafoot-fc.com",
+      ],
+    })
+  );
 
   // Cloudinary
   cloudinary.config({
