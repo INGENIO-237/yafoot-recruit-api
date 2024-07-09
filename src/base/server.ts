@@ -21,9 +21,7 @@ export default function createServer() {
       origin: [
         "http://localhost:3000",
         "https://yafoot-fc.com",
-        "http://yafoot-fc.com",
         "https://admin.yafoot-fc.com",
-        "http://admin.yafoot-fc.com",
       ],
     })
   );
