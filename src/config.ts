@@ -25,12 +25,6 @@ export default {
     ? process.env.TOOLBOX_API_KEY_LIVE
     : process.env.TOOLBOX_API_KEY_TEST) as string,
 
-  // INTOUCH
-  INTOUCH_URI: process.env.INTOUCH_URI as string,
-  INTOUCH_USERNAME: process.env.INTOUCH_USERNAME as string,
-  INTOUCH_PWD: process.env.INTOUCH_PWD as string,
-  INTOUCH_CALLBACK: process.env.INTOUCH_CALLBACK as string,
-
   // CLOUDINARY
   CLOUDINARY_NAME: (process.env.APP_ENV === ENV.PROD
     ? process.env.CLOUDINARY_NAME_LIVE

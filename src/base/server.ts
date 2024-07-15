@@ -22,6 +22,7 @@ export default function createServer() {
         "http://localhost:3000",
         "https://yafoot-fc.com",
         "https://admin.yafoot-fc.com",
+        "https://recruit.yafoot-fc.com/"
       ],
     })
   );
