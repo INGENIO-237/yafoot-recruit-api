@@ -1,6 +1,7 @@
 import { InferSchemaType, Schema, model } from "mongoose";
-import { CITIES, POSITIONS } from "../utils/constants/candidates";
+import { CITIES, POSITIONS, STRONG_FOOT } from "../utils/constants/candidates";
 import { generatePublicId } from "../utils/utilities";
+
 
 const candidateSchema = new Schema(
   {
@@ -9,6 +10,53 @@ const candidateSchema = new Schema(
     lastname: {
       type: String,
       required: true,
+    },
+    dob: {
+      type: Date,
+      required: true,
+    },
+    pob: {
+      type: String,
+      required: true,
+    },
+    address: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    clubs: {
+      type: [
+        {
+          start: { type: Number, required: true },
+          end: { type: Number, required: true },
+          name: { type: String, required: true },
+        },
+      ],
+      default: [],
+    },
+    height: {
+      type: Number,
+      required: true,
+    },
+    weight: {
+      type: Number,
+      required: true,
+    },
+    practiceLevel: {
+      type: String,
+      required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+    },
+    strongFoot: {
+      type: String,
+      enum: STRONG_FOOT,
+      required: true
     },
     city: {
       type: String,
