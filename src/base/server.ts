@@ -18,12 +18,7 @@ export default function createServer() {
   //  Cors
   server.use(
     cors({
-      origin: [
-        "http://localhost:3000",
-        "https://yafoot-fc.com",
-        "https://admin.yafoot-fc.com",
-        "https://recruit.yafoot-fc.com/"
-      ],
+      origin: "*",
     })
   );
 
