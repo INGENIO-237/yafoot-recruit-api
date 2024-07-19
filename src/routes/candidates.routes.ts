@@ -9,6 +9,11 @@ import {
 import Container from "typedi";
 import CandidatesController from "../controllers/candidates.controller";
 import { tryCatch } from "../utils/errors/errors.utils";
+import multer from "multer";
+import { storage } from "../utils/multer";
+import uploadCandidateImage from "../middlewares/cloudinary.upload";
+
+const upload = multer({ storage });
 
 const CandidatesRouter = Router();
 
@@ -18,7 +23,16 @@ CandidatesRouter.get("", tryCatch(controller.getCandidates.bind(controller)));
 
 CandidatesRouter.post(
   "",
+  upload.single("image"),
+  (req, res, next) => {
+    if (req.body.clubs) {
+      req.body.clubs = JSON.parse(req.body.clubs);
+    }
+
+    next();
+  },
   validate(registerCandidateSchema),
+  uploadCandidateImage,
   tryCatch(controller.registerCandidate.bind(controller))
 );
 
