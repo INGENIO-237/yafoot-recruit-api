@@ -17,7 +17,9 @@ export const storage = multer.diskStorage({
 
 export function removeTmpCandidateImg(path: string) {
   unlink(path, (err) => {
-    logger.error("Failed removing: ", path);
-    logger.error(err);
+    if (err) {
+      logger.error("Failed removing: ", path);
+      logger.error(err);
+    }
   });
 }

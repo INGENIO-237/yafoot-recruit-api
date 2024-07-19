@@ -17,7 +17,7 @@ export default async function uploadCandidateImage(
 
     if (url) {
       req.body.image = { url, publicId };
-        removeTmpCandidateImg(req.file.path);
+      removeTmpCandidateImg(req.file.path);
     } else {
       return res
         .status(HTTP.SERVER_ERROR)
