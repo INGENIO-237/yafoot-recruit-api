@@ -2,13 +2,22 @@ import { InferSchemaType, Schema, model } from "mongoose";
 import { CITIES, POSITIONS, STRONG_FOOT } from "../utils/constants/candidates";
 import { generatePublicId } from "../utils/utilities";
 
-
 const candidateSchema = new Schema(
   {
     publicId: String,
     firstname: String,
     lastname: {
       type: String,
+      required: true,
+    },
+    image: {
+      type: {
+        url: {
+          type: String,
+          required: true,
+        },
+        publicId: { type: String, required: true },
+      },
       required: true,
     },
     dob: {
@@ -56,7 +65,7 @@ const candidateSchema = new Schema(
     strongFoot: {
       type: String,
       enum: STRONG_FOOT,
-      required: true
+      required: true,
     },
     city: {
       type: String,

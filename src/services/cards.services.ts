@@ -17,6 +17,7 @@ import { CITIES, POSITIONS } from "../utils/constants/candidates";
 import { ISession } from "../models/sessions.model";
 import { formatDateToString } from "../utils/utilities";
 import SessionsServices from "./sessions.services";
+import axios from "axios";
 
 @Service()
 export default class CardsServices {
@@ -109,7 +110,6 @@ export default class CardsServices {
                 reference,
                 cardUrl: url,
               });
-
               // Remove tmp files
               logger.info("Removing tmp card image...");
               unlink(path.join(this._cardsDir, `${reference}.png`)).catch(
@@ -183,8 +183,15 @@ export default class CardsServices {
   ) {
     const { reference, candidate, session } = data;
     const { date } = session as ISession;
-    const { firstname, lastname, phone, city, position, publicId } =
-      candidate as ICandidate;
+    const {
+      firstname,
+      lastname,
+      phone,
+      city,
+      position,
+      publicId,
+      image: { url: photoUrl },
+    } = candidate as ICandidate;
 
     logger.info(`Generating card recto for ${reference}...`);
 
@@ -192,6 +199,13 @@ export default class CardsServices {
       path.join(__dirname, "..", "public", "templates", lang, "recto.png")
     );
     const qrCode = sharp(path.join(this._qrCodesDir, reference + ".png"));
+
+    const cloudinaryImage = await this.downloadImageFromCloudinary(photoUrl);
+
+    const photoSharp = sharp(cloudinaryImage).resize({
+      width: 300,
+      height: 300,
+    });
 
     const metadata = await recto.metadata();
 
@@ -207,10 +221,13 @@ export default class CardsServices {
     // Load recto and qrCode onto canvas
     const img = await loadImage(recto);
     const qr = await loadImage(qrCode);
+    const photo = await loadImage(photoSharp);
+
     ctx.drawImage(img, 0, 0);
 
     // Overlay the QR Code
     ctx.drawImage(qr, 65, 1160);
+    ctx.drawImage(photo, 650, 1060);
 
     ctx.textAlign = "center";
 
@@ -357,6 +374,20 @@ export default class CardsServices {
       logger.info("Done");
     } catch (err) {
       logger.error("Error processing images:", err);
+    }
+  }
+
+  async downloadImageFromCloudinary(url: string) {
+    try {
+      const response = await axios({
+        url,
+        responseType: "arraybuffer",
+      });
+      return Buffer.from(response.data, "binary");
+    } catch (error: any) {
+      logger.error(
+        `Failed to download image from Cloudinary: ${error.message}`
+      );
     }
   }
 }

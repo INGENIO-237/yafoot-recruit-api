@@ -4,15 +4,15 @@ import logger from "../utils/logger";
 
 @Service()
 export default class CloudinaryServices {
-  private async uploadImage(imagePath: string, filename?: string) {
+  async uploadImage(imagePath: string, filename?: string) {
     try {
-      const { secure_url } = await cloudinary.uploader
+      const { secure_url, public_id } = await cloudinary.uploader
         .upload(imagePath, {
           public_id: filename,
           overwrite: true,
         })
         .then((res) => res);
-      return { url: secure_url };
+      return { url: secure_url, publicId: public_id };
     } catch (error) {
       logger.error(error);
       return { url: undefined };
