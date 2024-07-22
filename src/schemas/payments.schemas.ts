@@ -1,4 +1,4 @@
-import { nativeEnum, object, string, z } from "zod";
+import { nativeEnum, object, optional, string, z } from "zod";
 import { PROVIDER } from "../utils/constants/payments";
 import { isValidNumber } from "libphonenumber-js";
 import { Types } from "mongoose";
@@ -53,3 +53,15 @@ export const getPaymentSchema = object({
 });
 
 export type GetPayment = z.infer<typeof getPaymentSchema>;
+
+export const getPaymentsSchema = object({
+  query: optional(
+    object({
+      session: optional(
+        string({ invalid_type_error: "Session must be a string" })
+      ),
+    })
+  ),
+});
+
+export type GetPayments = z.infer<typeof getPaymentsSchema>;

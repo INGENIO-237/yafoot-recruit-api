@@ -2,7 +2,7 @@ import { Service } from "typedi";
 import CandidatesServices from "./candidates.services";
 import SessionsServices from "./sessions.services";
 import PaymentRepo from "../repositories/payments.repository";
-import { CreatePayment } from "../schemas/payments.schemas";
+import { CreatePayment, GetPayments } from "../schemas/payments.schemas";
 import { ToolBoxServices } from "./mobile";
 import { PAYMENT_STATUS } from "../utils/constants/payments";
 import PaymentsHooks from "../hooks/payments.hooks";
@@ -71,8 +71,8 @@ export default class PaymentsService {
     });
   }
 
-  async getPayments(){
-    return await this.repository.getPayments()
+  async getPayments(query?: GetPayments["query"]){
+    return await this.repository.getPayments(query)
   }
 
   async getPayment({
