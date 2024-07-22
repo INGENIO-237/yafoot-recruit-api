@@ -1,7 +1,11 @@
 import { Service } from "typedi";
 import PaymentsService from "../services/payments.services";
 import { Request, Response } from "express";
-import { CreatePayment, GetPayment } from "../schemas/payments.schemas";
+import {
+  CreatePayment,
+  GetPayment,
+  GetPayments,
+} from "../schemas/payments.schemas";
 import config from "../config";
 import { HTTP } from "../utils/constants/common";
 
@@ -26,8 +30,11 @@ export default class PaymentsController {
     });
   }
 
-  async getPayments(req: Request, res: Response) {
-    const payments = await this.service.getPayments();
+  async getPayments(
+    req: Request<{}, {}, {}, GetPayments["query"]>,
+    res: Response
+  ) {
+    const payments = await this.service.getPayments(req.query);
 
     return res.status(HTTP.OK).json(payments);
   }

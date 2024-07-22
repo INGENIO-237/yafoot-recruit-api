@@ -9,11 +9,13 @@ export default class SessionsRepo {
   }
 
   async getSessions() {
-    return await Session.find();
+    return await Session.find().sort({ date: -1 });
   }
 
   async getLatestSession(date: Date) {
-    return await Session.findOne({ date: { $gt: date } }).select("-createdAt -updatedAt -__v");
+    return await Session.findOne({ date: { $gt: date } }).select(
+      "-createdAt -updatedAt -__v"
+    );
   }
 
   async getSession(sessionId: string) {
