@@ -26,6 +26,12 @@ export default class PaymentsController {
     });
   }
 
+  async getPayments(req: Request, res: Response) {
+    const payments = await this.service.getPayments();
+
+    return res.status(HTTP.OK).json(payments);
+  }
+
   async getPayment(req: Request<GetPayment["params"]>, res: Response) {
     const payment = await this.service.getPayment({
       reference: req.params.reference,

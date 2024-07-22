@@ -71,6 +71,10 @@ export default class PaymentsService {
     });
   }
 
+  async getPayments(){
+    return await this.repository.getPayments()
+  }
+
   async getPayment({
     reference,
     id,

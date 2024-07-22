@@ -17,6 +17,11 @@ PaymentsRouter.post(
 );
 
 PaymentsRouter.get(
+  "",
+  tryCatch(controller.getPayments.bind(controller))
+);
+
+PaymentsRouter.get(
   "/:reference",
   validate(getPaymentSchema),
   tryCatch(controller.getPayment.bind(controller))
